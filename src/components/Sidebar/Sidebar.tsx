@@ -35,8 +35,12 @@ export default function Sidebar() {
 
   useEffect(() => {
     const storedAdmin = localStorage.getItem('admin_user');
-    if (storedAdmin) {
-      setAdmin(JSON.parse(storedAdmin));
+    if (storedAdmin && storedAdmin !== 'undefined') {
+      try {
+        setAdmin(JSON.parse(storedAdmin));
+      } catch (e) {
+        console.error('Failed to parse admin_user', e);
+      }
     }
   }, []);
 

@@ -1,4 +1,4 @@
-export type TransactionStatus = 'pending' | 'success' | 'failed' | 'processing';
+export type TransactionStatus = 'pending' | 'success' | 'failed' | 'processing' | 'stuck' | 'confirmed';
 export type KYCStatus = 'pending' | 'approved' | 'rejected' | 'submitted';
 
 export interface BankDetails {
@@ -49,4 +49,5 @@ export interface AdminUser {
   username: string;
   email: string;
   role: string;
+  createdAt: string;
 }

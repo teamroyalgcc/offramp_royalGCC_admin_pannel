@@ -15,7 +15,7 @@ interface TransactionModalProps {
 }
 
 export default function TransactionModal({ transaction, isOpen, onClose, onUpdateStatus }: TransactionModalProps) {
-  const [selectedStatus, setSelectedStatus] = useState<TransactionStatus>(transaction?.status || 'PENDING');
+  const [selectedStatus, setSelectedStatus] = useState<TransactionStatus>(transaction?.status || 'pending');
   const [note, setNote] = useState('');
 
   if (!isOpen || !transaction) return null;
@@ -107,12 +107,12 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
               value={selectedStatus}
               onChange={(val) => setSelectedStatus(val as TransactionStatus)}
               options={[
-                { label: 'Pending', value: 'PENDING' },
-                { label: 'Processing', value: 'PROCESSING' },
-                { label: 'Success / Completed', value: 'SUCCESS' },
-                { label: 'Failed / Rejected', value: 'FAILED' },
-                { label: 'Stuck', value: 'STUCK' },
-                { label: 'Confirmed', value: 'CONFIRMED' },
+                { label: 'Pending', value: 'pending' },
+                { label: 'Processing', value: 'processing' },
+                { label: 'Success / Completed', value: 'success' },
+                { label: 'Failed / Rejected', value: 'failed' },
+                { label: 'Stuck', value: 'stuck' },
+                { label: 'Confirmed', value: 'confirmed' },
               ]}
               icon={Clock}
             />

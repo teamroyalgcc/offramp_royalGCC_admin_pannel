@@ -16,7 +16,7 @@ interface AdminModalProps {
 }
 
 export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode }: AdminModalProps) {
-  const [userName, setUserName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,10 +25,10 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
 
   useEffect(() => {
     if (editingAdmin && mode === 'password') {
-      setUserName(editingAdmin.userName);
+      setUsername(editingAdmin.username);
       setEmail(editingAdmin.email);
     } else {
-      setUserName('');
+      setUsername('');
       setEmail('');
       setPassword('');
       setConfirmPassword('');
@@ -43,7 +43,7 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
     const newErrors: Record<string, string> = {};
     
     if (mode === 'add') {
-      if (!userName.trim()) newErrors.userName = 'Username is required';
+      if (!username.trim()) newErrors.username = 'Username is required';
       if (!email.trim()) {
         newErrors.email = 'Email is required';
       } else if (!/\S+@\S+\.\S+/.test(email)) {
@@ -73,7 +73,7 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
     }
 
     if (mode === 'add') {
-      onSave({ userName, email, password, role });
+      onSave({ username, email, password, role });
       toast.success('Administrator added successfully');
     } else {
       onSave({ id: editingAdmin?.id, password });
@@ -94,7 +94,7 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
             <p className={styles.subtitle}>
               {mode === 'add' 
                 ? 'Create a new account with portal access' 
-                : `Update password for ${editingAdmin?.userName}`}
+                : `Update password for ${editingAdmin?.username}`}
             </p>
           </div>
           <button className={styles.closeButton} onClick={onClose}>
@@ -108,20 +108,20 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
               <>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>User Name</label>
-                  <div className={`${styles.inputWrapper} ${errors.userName ? styles.inputError : ''}`}>
+                  <div className={`${styles.inputWrapper} ${errors.username ? styles.inputError : ''}`}>
                     <User className={styles.inputIcon} size={18} />
                     <input
                       type="text"
-                      value={userName}
+                      value={username}
                       onChange={(e) => {
-                        setUserName(e.target.value);
-                        if (errors.userName) setErrors(prev => ({ ...prev, userName: '' }));
+                        setUsername(e.target.value);
+                        if (errors.username) setErrors(prev => ({ ...prev, username: '' }));
                       }}
                       placeholder="e.g. FinanceManager"
                       className={styles.input}
                     />
                   </div>
-                  {errors.userName && <span className={styles.errorText}>{errors.userName}</span>}
+                  {errors.username && <span className={styles.errorText}>{errors.username}</span>}
                 </div>
 
                 <div className={styles.inputGroup}>

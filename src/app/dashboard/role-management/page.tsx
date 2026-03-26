@@ -13,21 +13,21 @@ import styles from '../transactions/dashboard.module.css';
 const generateMockAdmins = (): AdminUser[] => [
   {
     id: 'ADM001',
-    userName: 'SuperAdmin',
+    username: 'SuperAdmin',
     email: 'admin@fintech.com',
     role: 'super_admin',
     createdAt: new Date('2024-01-01').toISOString(),
   },
   {
     id: 'ADM002',
-    userName: 'FinanceManager',
+    username: 'FinanceManager',
     email: 'finance@fintech.com',
     role: 'admin',
     createdAt: new Date('2024-02-15').toISOString(),
   },
   {
     id: 'ADM003',
-    userName: 'KYCReviewer',
+    username: 'KYCReviewer',
     email: 'kyc@fintech.com',
     role: 'admin',
     createdAt: new Date('2024-03-10').toISOString(),
@@ -77,7 +77,7 @@ export default function RoleManagementPage() {
     if (modalMode === 'add') {
       const newAdmin: AdminUser = {
         id: `ADM${100 + admins.length + 1}`,
-        userName: data.userName!,
+        username: data.username!,
         email: data.email!,
         role: data.role as any,
         createdAt: new Date().toISOString(),

@@ -26,7 +26,7 @@ export default function RecentDepositsTable({ data }: RecentDepositsTableProps) 
   }, [data]);
 
   const filteredData = useMemo(() => {
-    return depositData.filter(item => 
+    return depositData.filter((item:any) => 
       item.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.bankDetails.bankName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -86,8 +86,8 @@ export default function RecentDepositsTable({ data }: RecentDepositsTableProps) 
                   </div>
                 </td>
                 <td><span className={styles.txId}>{item.userId}</span></td>
-                <td className={styles.date}>{item.bankDetails.accountNumber}</td>
-                <td>{item.bankDetails.bankName}</td>
+                <td className={styles.date}>{item?.bankDetails?.accountNumber}</td>
+                <td>{item?.bankDetails?.bankName}</td>
                 <td>
                   <span className={styles.amount}>
                     {item.currency} {item.amount.toLocaleString()}

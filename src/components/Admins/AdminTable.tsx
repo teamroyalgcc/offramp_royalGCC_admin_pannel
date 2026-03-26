@@ -41,9 +41,9 @@ export default function AdminTable({ data, onChangePassword, onRemove }: AdminTa
                 <td>
                   <div className={styles.userInfo}>
                     <div className={styles.userAvatar}>
-                      {admin.userName.charAt(0)}
+                      {admin.username.charAt(0)}
                     </div>
-                    <span style={{ fontWeight: 600 }}>{admin.userName}</span>
+                    <span style={{ fontWeight: 600 }}>{admin.username}</span>
                   </div>
                 </td>
                 <td>

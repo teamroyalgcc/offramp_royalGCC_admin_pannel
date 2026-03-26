@@ -159,6 +159,21 @@
   color: #dc2626;
 }
 
+.statusProcessing {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.statusStuck {
+  background: #fdf2f8;
+  color: #db2777;
+}
+
+.statusConfirmed {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
 .date {
   color: #94a3b8;
 }

@@ -44,6 +44,9 @@ export default function DataTable({ data, onRowClick }: DataTableProps) {
       case 'success': return styles.statusSuccess;
       case 'pending': return styles.statusPending;
       case 'failed': return styles.statusFailed;
+      case 'processing': return styles.statusProcessing;
+      case 'confirmed': return styles.statusConfirmed;
+      case 'stuck': return styles.statusStuck;
       default: return '';
     }
   };
