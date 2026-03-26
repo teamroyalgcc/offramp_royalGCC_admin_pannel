@@ -1,6 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 import Link from 'next/link';
+
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/context/SidebarContext';
 import { 
@@ -10,20 +13,32 @@ import {
   LogOut, 
   ShieldCheck,
   Users,
+  Shield,
   X
 } from 'lucide-react';
+
 import styles from './sidebar.module.css';
 
 const menuItems = [
   { icon: Wallet, label: 'Wallet', href: '/dashboard' },
   { icon: ArrowRightLeft, label: 'Transactions', href: '/dashboard/transactions' },
   { icon: ShieldCheck, label: 'KYC', href: '/dashboard/kyc' },
-  { icon: Users, label: 'Role Management', href: '/dashboard/role-management' },
+  { icon: Users, label: 'Users', href: '/dashboard/users' },
+  { icon: Shield, label: 'Role Management', href: '/dashboard/role-management' },
 ];
+
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { isOpen, close } = useSidebar();
+  const [admin, setAdmin] = useState<any>(null);
+
+  useEffect(() => {
+    const storedAdmin = localStorage.getItem('admin_user');
+    if (storedAdmin) {
+      setAdmin(JSON.parse(storedAdmin));
+    }
+  }, []);
 
   return (
     <>
@@ -62,14 +77,18 @@ export default function Sidebar() {
       </nav>
 
       <div className={styles.footer}>
-        <Link href="/dashboard/profile" className={styles.userProfile} onClick={close}>
-          <div className={styles.avatar}>AD</div>
+        <div className={styles.userProfile}>
+          <div className={styles.avatar}>{admin?.username?.substring(0, 2).toUpperCase() || 'AD'}</div>
           <div className={styles.userInfo}>
-            <p className={styles.userName}>Admin User</p>
-            <p className={styles.userEmail}>admin@fintech.com</p>
+            <p className={styles.userName}>{admin?.role || 'Admin'}</p>
+            <p className={styles.userEmail}>{admin?.username || 'admin@fintech.com'}</p>
           </div>
-        </Link>
-        <button className={styles.logoutButton}>
+        </div>
+        <button className={styles.logoutButton} onClick={() => {
+          localStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_user');
+          window.location.href = '/login';
+        }}>
           <LogOut size={20} />
           <span>Logout</span>
         </button>
@@ -78,3 +97,4 @@ export default function Sidebar() {
     </>
   );
 }
+

@@ -5,31 +5,29 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Search, 
-  ArrowUpDown,
-  Filter,
   MoreVertical,
-  ShieldAlert,
-  ShieldCheck,
-  Clock
+  UserCheck,
+  UserX,
+  Mail,
+  Fingerprint
 } from 'lucide-react';
 import styles from '@/components/Shared/table.module.css';
-import { KYCRequest } from '@/types';
 
-interface KYCTableProps {
-  data: KYCRequest[];
-  onRowClick: (request: KYCRequest) => void;
+interface UserTableProps {
+  data: any[];
+  onFreezeUser: (id: string, frozen: boolean) => void;
 }
 
-export default function KYCTable({ data, onRowClick }: KYCTableProps) {
+export default function UserTable({ data, onFreezeUser }: UserTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
   const filteredData = useMemo(() => {
     return data.filter(item => 
-      item.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.account_holder_name || item.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.bankDetails.bankName.toLowerCase().includes(searchTerm.toLowerCase())
+      item.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [data, searchTerm]);
 
@@ -38,22 +36,6 @@ export default function KYCTable({ data, onRowClick }: KYCTableProps) {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved': return <ShieldCheck size={16} />;
-      case 'rejected': return <ShieldAlert size={16} />;
-      default: return <Clock size={16} />;
-    }
-  };
-
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'approved': return styles.statusSuccess;
-      case 'rejected': return styles.statusFailed;
-      default: return styles.statusPending;
-    }
-  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
@@ -76,7 +58,7 @@ export default function KYCTable({ data, onRowClick }: KYCTableProps) {
           <Search size={18} className={styles.searchIcon} />
           <input 
             type="text" 
-            placeholder="Search KYC requests..." 
+            placeholder="Search users..." 
             className={styles.searchInput}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -90,44 +72,63 @@ export default function KYCTable({ data, onRowClick }: KYCTableProps) {
             <tr>
               <th>ID</th>
               <th>User</th>
-              <th>Bank Name</th>
+              <th className={styles.hideOnMobile}>Bank Name</th>
               <th>Account Number</th>
               <th>Status</th>
-              <th>Submitted At</th>
+              <th className={styles.hideOnMobile}>Joined At</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             {paginatedData.map((item) => (
-              <tr key={item.id} onClick={() => onRowClick(item)} className={styles.tableRow}>
-                <td><span className={styles.txId}>#{item.id}</span></td>
+              <tr key={item.id} className={styles.tableRow}>
+                <td><span className={styles.txId}>#{item.id.substring(0, 8)}</span></td>
                 <td>
                   <div className={styles.userInfo}>
                     <div className={styles.userAvatar}>
-                      {item.userName.charAt(0)}
+                      {(item.account_holder_name || item.username || 'U').charAt(0)}
                     </div>
-                    <span>{item.userName}</span>
+                    <span>{item.account_holder_name || item.username}</span>
                   </div>
                 </td>
-                <td>{item.bankDetails.bankName}</td>
-                <td className={styles.date}>{item.bankDetails.accountNumber}</td>
+                <td className={styles.hideOnMobile}>{item.ifsc_code || 'N/A'}</td>
+                <td className={styles.date}>{item.account_number || 'No Account'}</td>
                 <td>
-                  <span className={`${styles.statusBadge} ${getStatusClass(item.status)}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content' }}>
-                    {getStatusIcon(item.status)}
-                    {item.status}
+                  <span className={`${styles.statusBadge} ${item.is_frozen ? styles.statusFailed : styles.statusSuccess}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content' }}>
+                    {item.is_frozen ? <UserX size={16} /> : <UserCheck size={16} />}
+                    {item.is_frozen ? 'Frozen' : 'Active'}
                   </span>
                 </td>
-                <td className={styles.date}>{formatDate(item.submittedAt)}</td>
+                <td className={`${styles.date} ${styles.hideOnMobile}`}>{formatDate(item.created_at)}</td>
                 <td>
-                  <button className={styles.moreButton}>
-                    <MoreVertical size={18} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <button 
+                      onClick={() => onFreezeUser(item.id, !item.is_frozen)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        border: '1px solid',
+                        backgroundColor: item.is_frozen ? '#ecfdf5' : '#fff1f2',
+                        color: item.is_frozen ? '#059669' : '#e11d48',
+                        borderColor: item.is_frozen ? '#10b981' : '#f43f5e'
+                      }}
+                    >
+                      {item.is_frozen ? 'Unfreeze' : 'Freeze'}
+                    </button>
+                    <button className={styles.moreButton}>
+                      <MoreVertical size={18} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
 
 
       <div className={styles.pagination}>

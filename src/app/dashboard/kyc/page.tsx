@@ -35,17 +35,55 @@ const generateMockKYCRequests = (count: number): KYCRequest[] => {
   }));
 };
 
+import { adminService } from '@/services/adminService';
+import { toast } from 'sonner';
+
 export default function KYCPage() {
   const [requests, setRequests] = useState<KYCRequest[]>([]);
   const [statusFilter, setStatusFilter] = useState<KYCStatus | 'all'>('all');
   const [selectedRequest, setSelectedRequest] = useState<KYCRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call to fetch KYC requests
     const fetchData = async () => {
-      const mockData = generateMockKYCRequests(15);
-      setRequests(mockData);
+      setLoading(true);
+      try {
+        const data = await adminService.listKyc();
+        // Assume API returns kyc_status which needs to be mapped to pending/approved/rejected
+        const mappedData = data.map((r: any) => ({
+          ...r,
+          id: r.id,
+          userName: r.account_holder_name || 'Unknown',
+          email: r.email || r.account_number || '', // email may be the phone number
+          status: (r.kyc_status === 'submitted' || r.kyc_status === 'pending') ? 'pending' : r.kyc_status as KYCStatus,
+          submittedAt: r.created_at || new Date().toISOString(),
+          documents: {
+             idCardFront: r.aadhaar_photo_url || r.aadhaar_image || ''
+          },
+          bankDetails: {
+            bankName: 'N/A', // Usually resolved from IFSC if needed
+            accountNumber: r.account_number || '',
+            accountHolder: r.account_holder_name || '',
+            ifscCode: r.ifsc_code || ''
+          },
+          aadhaarNumber: r.aadhaar_number,
+          isBanned: r.is_banned,
+          isFrozen: r.is_frozen,
+          isAdmin: r.is_admin,
+          accountStatus: r.account_status,
+          referralCode: r.referral_code,
+          referredBy: r.referred_by,
+          verifiedAt: r.kyc_verified_at,
+          rejectionReason: r.kyc_rejection_reason
+        }));
+
+        setRequests(mappedData);
+      } catch (error: any) {
+        toast.error('Failed to fetch KYC requests');
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, []);
@@ -59,19 +97,24 @@ export default function KYCPage() {
     setIsModalOpen(true);
   };
 
-  const handleUpdateStatus = async (id: string, status: KYCStatus) => {
+  const handleUpdateStatus = async (id: string, status: KYCStatus, reason: string = '') => {
     try {
-      console.log(`Updating KYC ${id} to ${status}`);
-      // In reality: await api.patch(`/kyc/${id}`, { status });
+      if (status === 'approved') {
+        await adminService.approveKyc(id);
+      } else if (status === 'rejected') {
+        await adminService.rejectKyc(id, reason);
+      }
       
+      toast.success(`KYC ${id} ${status}`);
       setRequests(prev => prev.map(r => 
         r.id === id ? { ...r, status } : r
       ));
       setIsModalOpen(false);
-    } catch (error) {
-      console.error('Failed to update status', error);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || `Failed to update KYC status`);
     }
   };
+
 
   return (
     <main className={styles.main}>

@@ -11,27 +11,20 @@ interface TransactionModalProps {
   transaction: Transaction | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdateStatus: (id: string, status: TransactionStatus, proof?: File) => void;
+  onUpdateStatus: (id: string, status: TransactionStatus, note: string) => void;
 }
 
 export default function TransactionModal({ transaction, isOpen, onClose, onUpdateStatus }: TransactionModalProps) {
-  const [selectedStatus, setSelectedStatus] = useState<TransactionStatus>(transaction?.status || 'pending');
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [file, setFile] = useState<File | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<TransactionStatus>(transaction?.status || 'PENDING');
+  const [note, setNote] = useState('');
 
   if (!isOpen || !transaction) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
   const handleUpdate = () => {
-    onUpdateStatus(transaction.id, selectedStatus, file || undefined);
-    toast.success(`Transaction #${transaction.id} updated to ${selectedStatus}`);
+    onUpdateStatus(transaction.id, selectedStatus, note);
     onClose();
   };
+
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -64,26 +57,33 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Bank Account Details</h3>
             <div className={styles.bankCard}>
-              <div className={styles.infoItem}>
-                <span className={styles.label}>Bank Name</span>
-                <span className={styles.value}>{transaction.bankDetails.bankName}</span>
-              </div>
-              <div className={styles.infoItem}>
-                <span className={styles.label}>Account Holder</span>
-                <span className={styles.value}>{transaction.bankDetails.accountHolder}</span>
-              </div>
-              <div className={styles.infoItem}>
-                <span className={styles.label}>Account Number</span>
-                <span className={styles.value}>{transaction.bankDetails.accountNumber}</span>
-              </div>
-              {transaction.bankDetails.ifscCode && (
-                <div className={styles.infoItem}>
-                  <span className={styles.label}>IFSC Code</span>
-                  <span className={styles.value}>{transaction.bankDetails.ifscCode}</span>
-                </div>
+              {transaction.bankDetails ? (
+                <>
+                  <div className={styles.infoItem}>
+                    <span className={styles.label}>Bank Name</span>
+                    <span className={styles.value}>{transaction.bankDetails.bankName}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.label}>Account Holder</span>
+                    <span className={styles.value}>{transaction.bankDetails.accountHolder}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.label}>Account Number</span>
+                    <span className={styles.value}>{transaction.bankDetails.accountNumber}</span>
+                  </div>
+                  {transaction.bankDetails.ifscCode && (
+                    <div className={styles.infoItem}>
+                      <span className={styles.label}>IFSC Code</span>
+                      <span className={styles.value}>{transaction.bankDetails.ifscCode}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className={styles.noData}>No bank details provided</p>
               )}
             </div>
           </div>
+
 
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Transaction Info</h3>
@@ -101,37 +101,31 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
             </div>
           </div>
 
-          <div className={styles.divider}></div>
-
           <div className={styles.section}>
             <CustomSelect
               label="Update Status"
               value={selectedStatus}
               onChange={(val) => setSelectedStatus(val as TransactionStatus)}
               options={[
-                { label: 'Pending', value: 'pending' },
-                { label: 'Success / Completed', value: 'success' },
-                { label: 'Failed / Rejected', value: 'failed' },
+                { label: 'Pending', value: 'PENDING' },
+                { label: 'Processing', value: 'PROCESSING' },
+                { label: 'Success / Completed', value: 'SUCCESS' },
+                { label: 'Failed / Rejected', value: 'FAILED' },
+                { label: 'Stuck', value: 'STUCK' },
+                { label: 'Confirmed', value: 'CONFIRMED' },
               ]}
               icon={Clock}
             />
           </div>
 
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Upload Proof of Transaction</h3>
-            <div className={styles.uploadArea}>
-              <input 
-                type="file" 
-                id="proof-upload" 
-                className={styles.fileInput} 
-                onChange={handleFileChange}
-              />
-              <label htmlFor="proof-upload" className={styles.uploadLabel}>
-                <Upload size={24} />
-                <span>{file ? file.name : 'Click to select or drag and drop proof file'}</span>
-                <span className={styles.smallText}>PNG, JPG or PDF up to 5MB</span>
-              </label>
-            </div>
+            <h3 className={styles.sectionTitle}>Add Note</h3>
+            <textarea
+              className={styles.noteInput}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g. Paid via IMPS"
+            />
           </div>
         </div>
 
@@ -143,3 +137,4 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
     </div>
   );
 }
+

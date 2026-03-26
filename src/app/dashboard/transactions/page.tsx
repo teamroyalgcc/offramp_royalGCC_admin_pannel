@@ -5,70 +5,100 @@ import MetricsGrid from '@/components/Dashboard/Metrics';
 import DataTable from '@/components/Shared/DataTable';
 import TransactionModal from '@/components/Transactions/TransactionModal';
 import { Transaction, TransactionStatus } from '@/types';
-import api from '@/lib/axios';
+import { adminService } from '@/services/adminService';
+import { toast } from 'sonner';
 import styles from './dashboard.module.css';
-
-// Mock data generator
-const generateMockTransactions = (count: number): Transaction[] => {
-  const types: any[] = ['withdraw', 'transfer', 'deposit'];
-  const statuses: any[] = ['success', 'pending', 'failed'];
-  const names = ['John Doe', 'Jane Smith', 'Robert Johnson', 'Michael Brown', 'Emily Davis'];
-
-  return Array.from({ length: count }, (_, i) => ({
-    id: `TX${1000 + i}`,
-    userId: `USR${500 + i}`,
-    userName: names[i % names.length],
-    amount: Math.floor(Math.random() * 10000) + 100,
-    currency: 'USD',
-    type: types[i % types.length],
-    status: statuses[i % statuses.length],
-    createdAt: new Date(Date.now() - Math.random() * 100000000).toISOString(),
-    bankDetails: {
-      bankName: 'Global Bank',
-      accountNumber: `****${Math.floor(1000 + Math.random() * 9000)}`,
-      accountHolder: names[i % names.length],
-      ifscCode: 'GLOB0001234',
-    }
-  }));
-};
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [metrics, setMetrics] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call to fetch transactions
     const fetchData = async () => {
+      setLoading(true);
       try {
-        // In reality: const response = await api.get('/transactions');
-        const mockData = generateMockTransactions(20);
-        setTransactions(mockData);
-      } catch (error) {
-        console.error('Failed to fetch transactions', error);
+        const [ordersData, metricsData] = await Promise.all([
+          adminService.listOrders(),
+          adminService.getDashboardMetrics()
+        ]);
+        
+        const mappedData = ordersData.map((d: any) => ({
+          ...d,
+          id: d.id,
+          type: 'exchange',
+          amount: parseFloat(d.usdt_amount),
+          inr_amount: parseFloat(d.inr_amount),
+          rate: parseFloat(d.rate),
+          status: d.status,
+          createdAt: d.created_at || new Date().toISOString(),
+        }));
+        
+        setTransactions(mappedData);
+        setMetrics(metricsData);
+      } catch (error: any) {
+        toast.error('Failed to fetch transactions');
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
+
+    // SSE for Real-time orders
+    const token = localStorage.getItem('admin_token');
+    if (token) {
+      const eventSource = new EventSource(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/stream/orders?token=${token}`);
+      
+      eventSource.addEventListener('orders', (event) => {
+        const newData = JSON.parse(event.data);
+        const mappedNewData = newData.map((d: any) => ({
+          ...d,
+          id: d.id,
+          type: 'exchange',
+          amount: parseFloat(d.usdt_amount),
+          inr_amount: parseFloat(d.inr_amount),
+          rate: parseFloat(d.rate),
+          status: d.status,
+          createdAt: d.created_at || new Date().toISOString(),
+        }));
+        setTransactions(mappedNewData);
+      });
+
+      eventSource.onerror = () => {
+        if (eventSource.readyState === EventSource.CLOSED) {
+          eventSource.close();
+        }
+      };
+
+      return () => {
+        eventSource.close();
+      };
+    }
   }, []);
+
+
 
   const handleRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     setIsModalOpen(true);
   };
 
-  const handleUpdateStatus = async (id: string, status: TransactionStatus, proof?: File) => {
+  const handleUpdateStatus = async (id: string, status: TransactionStatus, note: string = '') => {
     try {
-      console.log(`Updating transaction ${id} to ${status}`, proof);
-      // In reality: await api.patch(`/transactions/${id}`, { status, proof });
+      await adminService.updateOrderStatus(id, { status, note });
+      toast.success(`Transaction ${id} updated to ${status}`);
       
       setTransactions(prev => prev.map(t => 
         t.id === id ? { ...t, status } : t
       ));
       setIsModalOpen(false);
-    } catch (error) {
-      console.error('Failed to update status', error);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update transaction status');
     }
   };
+
 
   return (
     <main className={styles.main}>
@@ -85,12 +115,13 @@ export default function TransactionsPage() {
       </header>
 
       <section className={styles.content}>
-        <MetricsGrid />
+        <MetricsGrid data={metrics} />
         <DataTable 
           data={transactions} 
           onRowClick={handleRowClick} 
         />
       </section>
+
 
       <TransactionModal 
         transaction={selectedTransaction}

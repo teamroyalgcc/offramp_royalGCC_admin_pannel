@@ -2,8 +2,10 @@ import {
   ArrowDownLeft, 
   ArrowUpRight, 
   Clock, 
-  Activity 
+  Activity,
+  ShieldCheck
 } from 'lucide-react';
+
 import styles from './metrics.module.css';
 
 interface MetricCardProps {
@@ -35,39 +37,39 @@ function MetricCard({ title, value, change, isPositive, icon: Icon, color }: Met
   );
 }
 
-export default function MetricsGrid() {
+export default function MetricsGrid({ data }: { data?: any }) {
   const metrics = [
     {
-      title: 'Total Deposits',
-      value: '$245,850',
-      change: '+12.5%',
+      title: 'Total USDT Volume',
+      value: data?.total_volume_usdt ? `${parseFloat(data.total_volume_usdt).toLocaleString()} USDT` : '0 USDT',
+      change: '+0%',
       isPositive: true,
-      icon: ArrowDownLeft,
-      color: '#10b981',
+      icon: Activity,
+      color: '#4f46e5',
     },
     {
-      title: 'Total Withdrawals',
-      value: '$120,420',
-      change: '+8.2%',
-      isPositive: false,
-      icon: ArrowUpRight,
-      color: '#ef4444',
-    },
-    {
-      title: 'Pending Approvals',
-      value: '18',
-      change: '-2',
+      title: 'Total Users',
+      value: data?.total_users?.toString() || '0',
+      change: '+0',
       isPositive: true,
       icon: Clock,
       color: '#f59e0b',
     },
     {
-      title: 'Active Volume',
-      value: '$48,200',
-      change: '+4.3%',
+      title: 'Pending KYC',
+      value: data?.pending_kyc?.toString() || '0',
+      change: '-0',
+      isPositive: false,
+      icon: ShieldCheck, // Need to import this or Use Shield
+      color: '#ef4444',
+    },
+    {
+      title: 'Success Orders',
+      value: data?.success_orders?.toString() || '0',
+      change: '+0',
       isPositive: true,
-      icon: Activity,
-      color: '#4f46e5',
+      icon: ArrowUpRight,
+      color: '#10b981',
     }
   ];
 
@@ -79,3 +81,4 @@ export default function MetricsGrid() {
     </div>
   );
 }
+

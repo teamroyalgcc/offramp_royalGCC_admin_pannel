@@ -2,82 +2,73 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Lock, Mail, LogIn } from 'lucide-react';
+import { adminService } from '@/services/adminService';
 import { toast } from 'sonner';
 import styles from './login.module.css';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const data = await adminService.login({ username, password });
+      
+      // Store token
+      localStorage.setItem('admin_token', data.token);
+      localStorage.setItem('admin_user', JSON.stringify(data.user));
+      
+      toast.success('Login successful');
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast.error(error.message || 'Invalid credentials');
+    } finally {
       setLoading(false);
-      toast.success('Login successful! Welcome back.');
-      router.push('/dashboard/transactions');
-    }, 1500);
+    }
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.iconWrapper}>
-          <LogIn size={28} />
+    <main className={styles.container}>
+      <div className={styles.loginCard}>
+        <div className={styles.header}>
+          <h1>Admin Portal</h1>
+          <p>Login to manage your fintech ecosystem</p>
         </div>
         
-        <h1 className={styles.title}>Sign in with email</h1>
-        <p className={styles.subtitle}>
-          Manage your business transactions,<br />
-          and teams together. For free
-        </p>
-
         <form onSubmit={handleLogin} className={styles.form}>
           <div className={styles.inputGroup}>
-            <Mail className={styles.inputIcon} size={20} />
+            <label htmlFor="username">Username</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-              className={styles.input}
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
               required
             />
           </div>
-
+          
           <div className={styles.inputGroup}>
-            <Lock className={styles.inputIcon} size={20} />
+            <label htmlFor="password">Password</label>
             <input
-              type={showPassword ? 'text' : 'password'}
+              id="password"
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className={styles.input}
+              placeholder="Enter your password"
               required
             />
-            <button
-              type="button"
-              className={styles.togglePassword}
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
           </div>
-
-          {/* <a href="#" className={styles.forgotPasswordLink}>
-            Forgot password?
-          </a> */}
-
-          <button style={{marginTop : "20px"}} type="submit" disabled={loading} className={styles.submitButton}>
-            {loading ? 'Logging in...' : 'Get Started'}
+          
+          <button type="submit" disabled={loading} className={styles.loginButton}>
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }
