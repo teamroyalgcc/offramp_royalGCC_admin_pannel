@@ -6,6 +6,7 @@ import KYCModal from '@/components/KYC/KYCModal';
 import KYCMetrics from '@/components/KYC/KYCMetrics';
 import { KYCRequest, KYCStatus } from '@/types';
 import styles from '../transactions/dashboard.module.css';
+import TableSkeleton from '@/components/Shared/TableSkeleton';
 
 // ... (generateMockKYCRequests follows)
 
@@ -137,10 +138,14 @@ export default function KYCPage() {
           onFilterChange={setStatusFilter} 
         />
         
-        <KYCTable 
-          data={filteredRequests} 
-          onRowClick={handleRowClick} 
-        />
+        {loading ? (
+          <TableSkeleton columns={7} />
+        ) : (
+          <KYCTable 
+            data={filteredRequests} 
+            onRowClick={handleRowClick} 
+          />
+        )}
       </section>
 
       <KYCModal 

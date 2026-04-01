@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import styles from '../transactions/dashboard.module.css';
 import UserMetrics from '@/components/Users/UserMetrics';
 import UserTable from '@/components/Users/UserTable';
+import TableSkeleton from '@/components/Shared/TableSkeleton';
 
 
 export default function UsersManagementPage() {
@@ -66,12 +67,15 @@ export default function UsersManagementPage() {
             onFilterChange={setStatusFilter} 
         />
         
-        <UserTable 
-            data={filteredUsers} 
-            onFreezeUser={handleFreezeUser} 
-        />
+        {loading ? (
+          <TableSkeleton columns={7} />
+        ) : (
+          <UserTable 
+              data={filteredUsers} 
+              onFreezeUser={handleFreezeUser} 
+          />
+        )}
       </section>
     </main>
   );
 }
-

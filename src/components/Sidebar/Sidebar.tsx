@@ -14,17 +14,22 @@ import {
   ShieldCheck,
   Users,
   Shield,
-  X
+  TrendingUp,
+  X,
+  Settings
 } from 'lucide-react';
 
 import styles from './sidebar.module.css';
+import { adminService } from '@/services/adminService';
 
 const menuItems = [
   { icon: Wallet, label: 'Wallet', href: '/dashboard' },
   { icon: ArrowRightLeft, label: 'Transactions', href: '/dashboard/transactions' },
   { icon: ShieldCheck, label: 'KYC', href: '/dashboard/kyc' },
+  { icon: TrendingUp, label: 'Rates', href: '/dashboard/rates' },
   { icon: Users, label: 'Users', href: '/dashboard/users' },
-  { icon: Shield, label: 'Role Management', href: '/dashboard/role-management' },
+  { icon: Shield, label: 'Role Management', href: '/dashboard/role-management', superAdminOnly: true },
+  { icon: Settings, label: 'Settings', href: '/dashboard/settings', superAdminOnly: true },
 ];
 
 
@@ -34,15 +39,31 @@ export default function Sidebar() {
   const [admin, setAdmin] = useState<any>(null);
 
   useEffect(() => {
-    const storedAdmin = localStorage.getItem('admin_user');
-    if (storedAdmin && storedAdmin !== 'undefined') {
+    const fetchAdminProfile = async () => {
       try {
-        setAdmin(JSON.parse(storedAdmin));
+        const storedAdmin = localStorage.getItem('admin_user');
+        if (storedAdmin && storedAdmin !== 'undefined') {
+          setAdmin(JSON.parse(storedAdmin));
+        }
+        
+        const response = await adminService.getMe();
+        setAdmin(response);
+        localStorage.setItem('admin_user', JSON.stringify(response));
       } catch (e) {
-        console.error('Failed to parse admin_user', e);
+        console.error('Failed to fetch admin profile', e);
       }
-    }
+    };
+    
+    fetchAdminProfile();
   }, []);
+
+  const filteredMenuItems = menuItems.filter(item => {
+    console.log(admin)
+    if (item.superAdminOnly) {
+      return admin?.role === 'superadmin';
+    }
+    return true;
+  });
 
   return (
     <>
@@ -50,13 +71,8 @@ export default function Sidebar() {
       <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
         <div className={styles.logoContainer}>
           <div className={styles.logoGroup}>
-            <div className={styles.logoIcon}>
-              <div className={styles.logoSquare}></div>
-              <div className={styles.logoSquare}></div>
-              <div className={styles.logoSquare}></div>
-              <div className={styles.logoSquare}></div>
-            </div>
-            <span className={styles.logoText}>FinAdmin</span>
+            <img src="/logo.png" alt="Logo" className={styles.logoImage} />
+            <span className={styles.logoText}>Admin Portal</span>
           </div>
           <button className={styles.mobileClose} onClick={close}>
             <X size={24} />
@@ -64,7 +80,7 @@ export default function Sidebar() {
         </div>
 
       <nav className={styles.nav}>
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           return (

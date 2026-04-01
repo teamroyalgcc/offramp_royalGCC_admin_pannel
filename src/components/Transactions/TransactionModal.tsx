@@ -48,8 +48,12 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
                 <span className={styles.value}>{transaction.userName}</span>
               </div>
               <div className={styles.infoItem}>
+                <span className={styles.label}>Phone / Email</span>
+                <span className={styles.value}>{transaction.userEmail || 'N/A'}</span>
+              </div>
+              <div className={styles.infoItem}>
                 <span className={styles.label}>User ID</span>
-                <span className={styles.value}>{transaction.userId}</span>
+                <span className={styles.value} style={{ fontSize: '11px', wordBreak: 'break-all' }}>{transaction.userId}</span>
               </div>
             </div>
           </div>
@@ -89,15 +93,39 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
             <h3 className={styles.sectionTitle}>Transaction Info</h3>
             <div className={styles.grid}>
               <div className={styles.infoItem}>
-                <span className={styles.label}>Amount</span>
+                <span className={styles.label}>Amount (USDT)</span>
                 <span className={`${styles.value} ${styles.largeText}`}>
-                  {transaction.currency} {transaction.amount.toLocaleString()}
+                  {transaction.amount.toLocaleString()} {transaction.currency}
                 </span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.label}>Type</span>
-                <span className={styles.value}>{transaction.type}</span>
+                <span className={styles.value} style={{ textTransform: 'capitalize' }}>{transaction.type}</span>
               </div>
+              {transaction.inr_amount && (
+                <div className={styles.infoItem}>
+                  <span className={styles.label}>Expected INR</span>
+                  <span className={styles.value}>₹{transaction.inr_amount.toLocaleString()}</span>
+                </div>
+              )}
+              {transaction.rate && (
+                <div className={styles.infoItem}>
+                  <span className={styles.label}>Rate</span>
+                  <span className={styles.value}>₹{transaction.rate.toLocaleString()} / USDT</span>
+                </div>
+              )}
+              {transaction.gatewayRefId && (
+                <div className={styles.infoItem}>
+                  <span className={styles.label}>Gateway Ref</span>
+                  <span className={styles.value}>{transaction.gatewayRefId}</span>
+                </div>
+              )}
+              {transaction.failureReason && (
+                <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
+                  <span className={styles.label} style={{ color: '#ef4444' }}>Failure Reason</span>
+                  <span className={styles.value} style={{ color: '#ef4444' }}>{transaction.failureReason}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -107,12 +135,11 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
               value={selectedStatus}
               onChange={(val) => setSelectedStatus(val as TransactionStatus)}
               options={[
-                { label: 'Pending', value: 'pending' },
-                { label: 'Processing', value: 'processing' },
-                { label: 'Success / Completed', value: 'success' },
-                { label: 'Failed / Rejected', value: 'failed' },
-                { label: 'Stuck', value: 'stuck' },
-                { label: 'Confirmed', value: 'confirmed' },
+                { label: 'Pending / Initial', value: 'pending' },
+                { label: 'Approve Payout (Step 1)', value: 'approved' },
+                { label: 'Finalize Success (Step 2)', value: 'success' },
+                { label: 'Mark as Failed', value: 'failed' },
+                { label: 'Mark as Refunded', value: 'refunded' },
               ]}
               icon={Clock}
             />

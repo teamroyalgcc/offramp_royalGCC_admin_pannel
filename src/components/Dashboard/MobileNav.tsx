@@ -19,14 +19,9 @@ export default function MobileNav() {
   return (
     <div className={styles.mobileNav}>
       <div className={styles.logoGroup}>
-        <div className={styles.logoIcon}>
-          <div className={styles.logoSquare}></div>
-          <div className={styles.logoSquare}></div>
-          <div className={styles.logoSquare}></div>
-          <div className={styles.logoSquare}></div>
-        </div>
+        <img src="/logo.png" alt="Logo" className={styles.logoImage} />
         <div>
-          <span className={styles.mobileLogoText}>FinAdmin</span>
+          <span className={styles.mobileLogoText}>Admin Portal</span>
           <p className={styles.pageTitle}>{getPageTitle(pathname)}</p>
         </div>
       </div>

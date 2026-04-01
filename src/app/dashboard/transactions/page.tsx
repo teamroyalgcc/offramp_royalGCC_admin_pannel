@@ -8,6 +8,7 @@ import { Transaction, TransactionStatus } from '@/types';
 import { adminService } from '@/services/adminService';
 import { toast } from 'sonner';
 import styles from './dashboard.module.css';
+import TableSkeleton from '@/components/Shared/TableSkeleton';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -28,12 +29,24 @@ export default function TransactionsPage() {
         const mappedData = ordersData.map((d: any) => ({
           ...d,
           id: d.id,
+          userId: d.user_id || 'N/A',
+          userName: d.bank_accounts?.account_holder_name || d.users?.email?.split('@')[0] || 'User',
+          userEmail: d.users?.email,
           type: 'exchange',
           amount: parseFloat(d.usdt_amount),
           inr_amount: parseFloat(d.inr_amount),
           rate: parseFloat(d.rate),
-          status: d.status,
+          currency: 'USDT',
+          status: (d.status || 'pending').toLowerCase() as TransactionStatus,
           createdAt: d.created_at || new Date().toISOString(),
+          gatewayRefId: d.gateway_ref_id,
+          failureReason: d.failure_reason,
+          bankDetails: d.bank_accounts ? {
+            bankName: 'N/A',
+            accountNumber: d.bank_accounts.account_number,
+            accountHolder: d.bank_accounts.account_holder_name,
+            ifscCode: d.bank_accounts.ifsc_code
+          } : undefined
         }));
         
         setTransactions(mappedData);
@@ -45,37 +58,6 @@ export default function TransactionsPage() {
       }
     };
     fetchData();
-
-    // SSE for Real-time orders
-    const token = localStorage.getItem('admin_token');
-    if (token) {
-      const eventSource = new EventSource(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/stream/orders?token=${token}`);
-      
-      eventSource.addEventListener('orders', (event) => {
-        const newData = JSON.parse(event.data);
-        const mappedNewData = newData.map((d: any) => ({
-          ...d,
-          id: d.id,
-          type: 'exchange',
-          amount: parseFloat(d.usdt_amount),
-          inr_amount: parseFloat(d.inr_amount),
-          rate: parseFloat(d.rate),
-          status: d.status,
-          createdAt: d.created_at || new Date().toISOString(),
-        }));
-        setTransactions(mappedNewData);
-      });
-
-      eventSource.onerror = () => {
-        if (eventSource.readyState === EventSource.CLOSED) {
-          eventSource.close();
-        }
-      };
-
-      return () => {
-        eventSource.close();
-      };
-    }
   }, []);
 
 
@@ -87,7 +69,9 @@ export default function TransactionsPage() {
 
   const handleUpdateStatus = async (id: string, status: TransactionStatus, note: string = '') => {
     try {
-      await adminService.updateOrderStatus(id, { status, note });
+      // API expects uppercase status: "PENDING" | "PROCESSING" | "APPROVED" | "SUCCESS" | "FAILED" | "REFUNDED"
+      const apiStatus = status.toUpperCase();
+      await adminService.updateOrderStatus(id, { status: apiStatus, note });
       toast.success(`Transaction ${id} updated to ${status}`);
       
       setTransactions(prev => prev.map(t => 
@@ -116,10 +100,14 @@ export default function TransactionsPage() {
 
       <section className={styles.content}>
         <MetricsGrid data={metrics} />
-        <DataTable 
-          data={transactions} 
-          onRowClick={handleRowClick} 
-        />
+        {loading ? (
+          <TableSkeleton columns={7} />
+        ) : (
+          <DataTable 
+            data={transactions} 
+            onRowClick={handleRowClick} 
+          />
+        )}
       </section>
 
 

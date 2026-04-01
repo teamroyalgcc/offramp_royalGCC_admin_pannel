@@ -56,16 +56,16 @@
 }
 
 .iconWrapper {
-  width: 56px;
-  height: 56px;
-  background: #ffffff;
-  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
-  color: #111;
+}
+
+.logoImage {
+  max-height: 48px;
+  width: auto;
+  object-fit: contain;
 }
 
 .title {

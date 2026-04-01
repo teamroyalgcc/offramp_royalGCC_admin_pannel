@@ -25,6 +25,12 @@
   gap: 12px;
 }
 
+.logoImage {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
 .logoIcon {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

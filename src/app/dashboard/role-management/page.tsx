@@ -1,51 +1,59 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserPlus, RefreshCw, Shield } from 'lucide-react';
+import { UserPlus, RefreshCw, Shield, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import AdminTable from '@/components/Admins/AdminTable';
 import AdminModal from '@/components/Admins/AdminModal';
 import ConfirmModal from '@/components/Shared/ConfirmModal';
+import { adminService } from '@/services/adminService';
 import { AdminUser } from '@/types';
 import styles from '../transactions/dashboard.module.css';
-
-// Mock data generator for Admins
-const generateMockAdmins = (): AdminUser[] => [
-  {
-    id: 'ADM001',
-    username: 'SuperAdmin',
-    email: 'admin@fintech.com',
-    role: 'super_admin',
-    createdAt: new Date('2024-01-01').toISOString(),
-  },
-  {
-    id: 'ADM002',
-    username: 'FinanceManager',
-    email: 'finance@fintech.com',
-    role: 'admin',
-    createdAt: new Date('2024-02-15').toISOString(),
-  },
-  {
-    id: 'ADM003',
-    username: 'KYCReviewer',
-    email: 'kyc@fintech.com',
-    role: 'admin',
-    createdAt: new Date('2024-03-10').toISOString(),
-  }
-];
+import TableSkeleton from '@/components/Shared/TableSkeleton';
 
 export default function RoleManagementPage() {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'password'>('add');
   const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
-  
-  // Custom confirmation state
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState<string | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const router = useRouter();
+
+  const fetchAdmins = async () => {
+    setLoading(true);
+    try {
+      // Check authorization first
+      const me = await adminService.getMe();
+      if (me.role !== 'superadmin') {
+        setIsAuthorized(false);
+        toast.error('Unauthorized access');
+        router.push('/dashboard');
+        return;
+      }
+      setIsAuthorized(true);
+
+      const response = await adminService.listAdmins();
+      // Handle both {status: 'success', data: []} and direct []
+      const adminData = Array.isArray(response) ? response : (response.data || []);
+      
+      const mappedAdmins = adminData.map((a: any) => ({
+        ...a,
+        createdAt: a.created_at || a.createdAt
+      }));
+      setAdmins(mappedAdmins);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to fetch admins');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setAdmins(generateMockAdmins());
+    fetchAdmins();
   }, []);
 
   const handleAddAdmin = () => {
@@ -65,29 +73,59 @@ export default function RoleManagementPage() {
     setIsConfirmOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (adminToDelete) {
-      setAdmins(prev => prev.filter(admin => admin.id !== adminToDelete));
-      toast.success('Administrator access revoked');
-      setAdminToDelete(null);
+      try {
+        const response = await adminService.deleteAdmin(adminToDelete);
+        if (response.status === 'success' || response.message || response.success) {
+          toast.success(response.message || 'Administrator access revoked');
+          fetchAdmins(); // Refresh the list
+        } else {
+          toast.error(response.message || 'Failed to revoke access');
+        }
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || error.message || 'Failed to delete admin');
+      } finally {
+        setIsConfirmOpen(false);
+        setAdminToDelete(null);
+      }
     }
   };
 
-  const handleSaveAdmin = (data: Partial<AdminUser> & { password?: string }) => {
-    if (modalMode === 'add') {
-      const newAdmin: AdminUser = {
-        id: `ADM${100 + admins.length + 1}`,
-        username: data.username!,
-        email: data.email!,
-        role: data.role as any,
-        createdAt: new Date().toISOString(),
-      };
-      setAdmins(prev => [...prev, newAdmin]);
-    } else {
-      // Password update logic simulated
-      console.log('Password updated for admin:', data.id);
+  const handleSaveAdmin = async (data: Partial<AdminUser> & { password?: string }) => {
+    try {
+      if (modalMode === 'add') {
+        const response = await adminService.addAdmin({
+          username: data.username,
+          password: data.password,
+          role: data.role
+        });
+        if (response.status === 'success' || response.username || response.admin) {
+          toast.success(response.message || 'Admin added successfully');
+          fetchAdmins(); // Refresh the list
+        } else {
+          toast.error(response.message || 'Failed to add admin');
+        }
+      } else {
+        if (selectedAdmin) {
+          const response = await adminService.updateAdmin(selectedAdmin.id, {
+            password: data.password,
+            username: data.username || selectedAdmin.username
+          });
+          if (response.status === 'success' || response.message || response.admin) {
+            toast.success(response.message || 'Admin credentials updated');
+            fetchAdmins(); // Refresh to get updated data
+          } else {
+            toast.error(response.message || 'Failed to update credentials');
+          }
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || error.message || 'Operation failed');
     }
   };
+
+  if (isAuthorized === false) return null;
 
   return (
     <main className={styles.main}>
@@ -100,8 +138,8 @@ export default function RoleManagementPage() {
           <p className={styles.subtitle}>Manage administrator accounts and portal access permissions</p>
         </div>
         <div className={styles.headerActions}>
-          <button className={styles.refreshButton} onClick={() => setAdmins(generateMockAdmins())}>
-            <RefreshCw size={18} style={{ marginRight: '8px' }} />
+          <button className={styles.refreshButton} onClick={fetchAdmins} disabled={loading}>
+            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} style={{ marginRight: '8px' }} />
             Refresh
           </button>
           <button 
@@ -116,11 +154,27 @@ export default function RoleManagementPage() {
       </header>
 
       <section className={styles.content}>
-        <AdminTable 
-          data={admins} 
-          onChangePassword={handleChangePassword}
-          onRemove={handleRemoveClick}
-        />
+        {loading ? (
+          <TableSkeleton rows={5} />
+        ) : admins.length > 0 ? (
+          <AdminTable 
+            data={admins} 
+            onChangePassword={handleChangePassword}
+            onRemove={handleRemoveClick}
+          />
+        ) : (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>
+              <UserPlus size={48} />
+            </div>
+            <h3 className={styles.emptyTitle}>No Administrators Yet</h3>
+            <p className={styles.emptyText}>Get started by creating the first administrator account for your team.</p>
+            <button className={styles.emptyButton} onClick={handleAddAdmin}>
+              <UserPlus size={18} style={{ marginRight: '8px' }} />
+              Add First Admin
+            </button>
+          </div>
+        )}
       </section>
 
       <AdminModal 

@@ -27,9 +27,9 @@ export default function RecentDepositsTable({ data }: RecentDepositsTableProps) 
 
   const filteredData = useMemo(() => {
     return depositData.filter((item:any) => 
-      item.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.bankDetails.bankName.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item?.bankDetails?.bankName || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [depositData, searchTerm]);
 
@@ -80,9 +80,9 @@ export default function RecentDepositsTable({ data }: RecentDepositsTableProps) 
                 <td>
                   <div className={styles.userInfo}>
                     <div className={styles.userAvatar}>
-                      {item.userName.charAt(0)}
+                      {(item.userName || 'U').charAt(0)}
                     </div>
-                    <span>{item.userName}</span>
+                    <span>{item.userName || 'Unknown'}</span>
                   </div>
                 </td>
                 <td><span className={styles.txId}>{item.userId}</span></td>

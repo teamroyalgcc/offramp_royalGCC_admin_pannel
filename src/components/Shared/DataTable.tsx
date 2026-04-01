@@ -27,9 +27,9 @@ export default function DataTable({ data, onRowClick }: DataTableProps) {
   // Simple client-side search for demonstration
   const filteredData = useMemo(() => {
     return data.filter(item => 
-      item.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.type.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.type || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [data, searchTerm]);
 
@@ -40,13 +40,17 @@ export default function DataTable({ data, onRowClick }: DataTableProps) {
   );
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success': return styles.statusSuccess;
+    switch (status.toLowerCase()) {
+      case 'success':
+      case 'completed': 
+        return styles.statusSuccess;
       case 'pending': return styles.statusPending;
       case 'failed': return styles.statusFailed;
       case 'processing': return styles.statusProcessing;
       case 'confirmed': return styles.statusConfirmed;
       case 'stuck': return styles.statusStuck;
+      case 'approved': return styles.statusApproved;
+      case 'refunded': return styles.statusRefunded;
       default: return '';
     }
   };
@@ -100,9 +104,9 @@ export default function DataTable({ data, onRowClick }: DataTableProps) {
                 <td>
                   <div className={styles.userInfo}>
                     <div className={styles.userAvatar}>
-                      {item.userName.charAt(0)}
+                      {(item.userName || 'U').charAt(0)}
                     </div>
-                    <span>{item.userName}</span>
+                    <span>{item.userName || 'Unknown'}</span>
                   </div>
                 </td>
                 <td className={styles.capitalize}>{item.type}</td>

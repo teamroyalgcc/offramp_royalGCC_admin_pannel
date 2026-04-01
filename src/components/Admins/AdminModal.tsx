@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, User, Mail, Lock, ShieldCheck, AlertCircle } from 'lucide-react';
+import { X, User, Mail, Lock, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import styles from './admin_modal.module.css';
 import { AdminUser } from '@/types';
@@ -17,24 +17,29 @@ interface AdminModalProps {
 
 export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode }: AdminModalProps) {
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'admin' | 'super_admin'>('admin');
+  const [role, setRole] = useState<'admin' | 'superadmin'>('admin');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
-    if (editingAdmin && mode === 'password') {
-      setUsername(editingAdmin.username);
-      setEmail(editingAdmin.email);
-    } else {
-      setUsername('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      setRole('admin');
+    if (isOpen) {
+      if (editingAdmin && mode === 'password') {
+        setUsername(editingAdmin.username);
+        setPassword('');
+        setConfirmPassword('');
+      } else {
+        setUsername('');
+        setPassword('');
+        setConfirmPassword('');
+        setRole('admin');
+      }
+      setErrors({});
+      setShowPassword(false);
+      setShowConfirmPassword(false);
     }
-    setErrors({});
   }, [editingAdmin, mode, isOpen]);
 
   if (!isOpen) return null;
@@ -44,11 +49,6 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
     
     if (mode === 'add') {
       if (!username.trim()) newErrors.username = 'Username is required';
-      if (!email.trim()) {
-        newErrors.email = 'Email is required';
-      } else if (!/\S+@\S+\.\S+/.test(email)) {
-        newErrors.email = 'Email is invalid';
-      }
     }
 
     if (!password) {
@@ -73,11 +73,9 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
     }
 
     if (mode === 'add') {
-      onSave({ username, email, password, role });
-      toast.success('Administrator added successfully');
+      onSave({ username, password, role });
     } else {
       onSave({ id: editingAdmin?.id, password });
-      toast.success('Password updated successfully');
     }
     
     onClose();
@@ -118,28 +116,11 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
                         if (errors.username) setErrors(prev => ({ ...prev, username: '' }));
                       }}
                       placeholder="e.g. FinanceManager"
+                      autoComplete="off"
                       className={styles.input}
                     />
                   </div>
                   {errors.username && <span className={styles.errorText}>{errors.username}</span>}
-                </div>
-
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Email Address</label>
-                  <div className={`${styles.inputWrapper} ${errors.email ? styles.inputError : ''}`}>
-                    <Mail className={styles.inputIcon} size={18} />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
-                      }}
-                      placeholder="admin@example.com"
-                      className={styles.input}
-                    />
-                  </div>
-                  {errors.email && <span className={styles.errorText}>{errors.email}</span>}
                 </div>
 
                 <div className={styles.inputGroup}>
@@ -149,7 +130,7 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
                     onChange={(val) => setRole(val as any)}
                     options={[
                       { label: 'Standard Admin', value: 'admin' },
-                      { label: 'Super Admin', value: 'super_admin' },
+                      { label: 'Super Admin', value: 'superadmin' },
                     ]}
                     icon={ShieldCheck}
                   />
@@ -164,15 +145,23 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
               <div className={`${styles.inputWrapper} ${errors.password ? styles.inputError : ''}`}>
                 <Lock className={styles.inputIcon} size={18} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
                   }}
                   placeholder="••••••••••••"
+                  autoComplete="new-password"
                   className={styles.input}
                 />
+                <button 
+                  type="button" 
+                  className={styles.eyeButton} 
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
               {errors.password && <span className={styles.errorText}>{errors.password}</span>}
             </div>
@@ -182,15 +171,23 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
               <div className={`${styles.inputWrapper} ${errors.confirmPassword ? styles.inputError : ''}`}>
                 <Lock className={styles.inputIcon} size={18} />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
                     if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: '' }));
                   }}
                   placeholder="••••••••••••"
+                  autoComplete="new-password"
                   className={styles.input}
                 />
+                <button 
+                  type="button" 
+                  className={styles.eyeButton} 
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
               {errors.confirmPassword && <span className={styles.errorText}>{errors.confirmPassword}</span>}
             </div>

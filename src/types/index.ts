@@ -1,4 +1,4 @@
-export type TransactionStatus = 'pending' | 'success' | 'failed' | 'processing' | 'stuck' | 'confirmed';
+export type TransactionStatus = 'pending' | 'success' | 'failed' | 'processing' | 'stuck' | 'confirmed' | 'approved' | 'refunded';
 export type KYCStatus = 'pending' | 'approved' | 'rejected' | 'submitted';
 
 export interface BankDetails {
@@ -12,6 +12,7 @@ export interface Transaction {
   id: string;
   userId: string;
   userName: string;
+  userEmail?: string;
   amount: number;
   inr_amount?: number;
   rate?: number;
@@ -20,6 +21,8 @@ export interface Transaction {
   status: TransactionStatus;
   createdAt: string;
   bankDetails?: BankDetails;
+  gatewayRefId?: string | null;
+  failureReason?: string | null;
 }
 
 export interface KYCRequest {
@@ -47,7 +50,15 @@ export interface KYCRequest {
 export interface AdminUser {
   id: string;
   username: string;
-  email: string;
   role: string;
   createdAt: string;
+}
+
+export interface ExchangeRate {
+  id: string;
+  currency: string;
+  pair: string;
+  rate: number;
+  updatedAt: string;
+  updatedBy?: string;
 }

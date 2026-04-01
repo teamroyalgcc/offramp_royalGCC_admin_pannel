@@ -29,7 +29,6 @@ export default function AdminTable({ data, onChangePassword, onRemove }: AdminTa
           <thead>
             <tr>
               <th>Admin Name</th>
-              <th>Email</th>
               <th>Role</th>
               <th>Created At</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
@@ -47,15 +46,9 @@ export default function AdminTable({ data, onChangePassword, onRemove }: AdminTa
                   </div>
                 </td>
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
-                    <Mail size={14} />
-                    {admin.email}
-                  </div>
-                </td>
-                <td>
-                  <span className={`${styles.statusBadge} ${admin.role === 'super_admin' ? styles.statusSuccess : styles.statusPending}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content', textTransform: 'capitalize' }}>
+                  <span className={`${styles.statusBadge} ${admin.role === 'superadmin' ? styles.statusSuccess : styles.statusPending}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content', textTransform: 'capitalize' }}>
                     <Shield size={14} />
-                    {admin.role.replace('_', ' ')}
+                    {admin.role}
                   </span>
                 </td>
                 <td className={styles.date}>

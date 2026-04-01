@@ -20,6 +20,12 @@
   text-decoration: none;
 }
 
+.logoImage {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+}
+
 .logoIcon {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

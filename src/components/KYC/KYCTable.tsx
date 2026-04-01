@@ -27,9 +27,9 @@ export default function KYCTable({ data, onRowClick }: KYCTableProps) {
 
   const filteredData = useMemo(() => {
     return data.filter(item => 
-      item.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.bankDetails.bankName.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item?.bankDetails?.bankName || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [data, searchTerm]);
 
@@ -104,9 +104,9 @@ export default function KYCTable({ data, onRowClick }: KYCTableProps) {
                 <td>
                   <div className={styles.userInfo}>
                     <div className={styles.userAvatar}>
-                      {item.userName.charAt(0)}
+                      {(item.userName || 'U').charAt(0)}
                     </div>
-                    <span>{item.userName}</span>
+                    <span>{item.userName || 'Unknown'}</span>
                   </div>
                 </td>
                 <td>{item.bankDetails.bankName}</td>

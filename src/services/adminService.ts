@@ -65,5 +65,41 @@ export const adminService = {
   listAuditLogs: async () => {
     const response = await api.get('/api/admin/audit');
     return response.data;
+  },
+
+  // --- CONFIG / RATES ---
+  getLiveRate: async () => {
+    const response = await api.get('/api/exchange/rate');
+    return response.data; // { rate: number }
+  },
+  updateExchangeSpread: async (spreadPercent: number) => {
+    const response = await api.post('/api/admin/settings/rate', { spreadPercent });
+    return response.data;
+  },
+
+  // --- ADMIN PROFILE & ROLE MANAGEMENT ---
+  getMe: async () => {
+    const response = await api.get('/api/admin/me');
+    return response.data;
+  },
+  updateCredentials: async (payload: { username?: string; password?: string }) => {
+    const response = await api.post('/api/admin/update-credentials', payload);
+    return response.data;
+  },
+  listAdmins: async () => {
+    const response = await api.get('/api/admin/list');
+    return response.data;
+  },
+  addAdmin: async (payload: any) => {
+    const response = await api.post('/api/admin/add-admin', payload);
+    return response.data;
+  },
+  updateAdmin: async (id: string, payload: any) => {
+    const response = await api.post(`/api/admin/${id}/update`, payload);
+    return response.data;
+  },
+  deleteAdmin: async (id: string) => {
+    const response = await api.delete(`/api/admin/${id}`);
+    return response.data;
   }
 };

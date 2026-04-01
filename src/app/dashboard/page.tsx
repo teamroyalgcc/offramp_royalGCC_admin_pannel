@@ -10,6 +10,7 @@ import styles from './transactions/dashboard.module.css';
 import { adminService } from '@/services/adminService';
 import { toast } from 'sonner';
 import MetricsGrid from '@/components/Dashboard/Metrics';
+import TableSkeleton from '@/components/Shared/TableSkeleton';
 
 export default function WalletDashboard() {
   const [deposits, setDeposits] = useState<Transaction[]>([]);
@@ -28,6 +29,8 @@ export default function WalletDashboard() {
         const mappedDeposits = depositsData.map((d: any) => ({
           ...d,
           id: d.id,
+          userId: d.userId || d.user_id || 'N/A',
+          userName: d.userName || d.username || d.account_holder_name || 'User',
           type: 'deposit',
           amount: parseFloat(d.amount),
           currency: d.token_symbol || 'USDT',
@@ -57,7 +60,11 @@ export default function WalletDashboard() {
 
       <section className={styles.content}>
         <MetricsGrid data={metrics} />
-        <RecentDepositsTable data={deposits} />
+        {loading ? (
+          <TableSkeleton columns={8} />
+        ) : (
+          <RecentDepositsTable data={deposits} />
+        )}
       </section>
     </main>
   );

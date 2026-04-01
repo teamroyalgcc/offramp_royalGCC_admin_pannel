@@ -37,7 +37,7 @@ export default function LoginPage() {
     <main className={styles.container}>
       <div className={styles.card}>
         <div className={styles.iconWrapper}>
-          <ShieldCheck size={32} />
+          <img src="/logo.png" alt="Logo" className={styles.logoImage} />
         </div>
         
         <h1 className={styles.title}>Admin Portal</h1>
