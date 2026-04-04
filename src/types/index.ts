@@ -30,12 +30,13 @@ export interface KYCRequest {
   userId: string;
   userName: string;
   email: string;
+  phoneNumber?: string;
   status: KYCStatus;
   submittedAt: string;
   documents: {
     idCardFront?: string;
   };
-  bankDetails: BankDetails;
+  bankDetails?: BankDetails;
   aadhaarNumber?: string;
   isBanned?: boolean;
   isFrozen?: boolean;

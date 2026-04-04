@@ -20,6 +20,7 @@ const generateMockKYCRequests = (count: number): KYCRequest[] => {
     userId: `USR${500 + i}`,
     userName: names[i % names.length],
     email: `${names[i % names.length].toLowerCase().replace(' ', '.')}@example.com`,
+    phoneNumber: `+91 ${9000000000 + i}`,
     submittedAt: new Date(Date.now() - Math.random() * 100000000).toISOString(),
     status: statuses[i % statuses.length],
     documents: {
@@ -57,6 +58,7 @@ export default function KYCPage() {
           id: r.id,
           userName: r.account_holder_name || 'Unknown',
           email: r.email || r.account_number || '', // email may be the phone number
+          phoneNumber: r.phone || r.phone_number || '',
           status: (r.kyc_status === 'submitted' || r.kyc_status === 'pending') ? 'pending' : r.kyc_status as KYCStatus,
           submittedAt: r.created_at || new Date().toISOString(),
           documents: {
@@ -139,7 +141,7 @@ export default function KYCPage() {
         />
         
         {loading ? (
-          <TableSkeleton columns={7} />
+          <TableSkeleton columns={5} />
         ) : (
           <KYCTable 
             data={filteredRequests} 

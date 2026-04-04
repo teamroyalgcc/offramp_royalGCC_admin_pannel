@@ -35,8 +35,8 @@ export default function RatesPage() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     const spread = parseFloat(spreadPercent);
-    if (isNaN(spread) || spread < 0 || spread > 100) {
-      toast.error('Spread must be a number between 0 and 100');
+    if (isNaN(spread) || spread > 100) {
+      toast.error('Spread must be a numeric value less than or equal to 100');
       return;
     }
 
@@ -156,7 +156,7 @@ export default function RatesPage() {
               <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                 <Info size={20} style={{ color: '#3b82f6' }} />
                 <p className={styles.infoText} style={{ color: '#1e293b' }}>
-                  The spread is subtracted from the market rate. 1% spread means users get market rate - 1%.
+                  The spread is subtracted from the market rate. 1% spread means users get market rate - 1%; -1% spread means users get market rate + 1%.
                 </p>
               </div>
             </div>

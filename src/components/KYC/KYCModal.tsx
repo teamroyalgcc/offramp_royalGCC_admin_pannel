@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, CheckCircle, AlertCircle, ExternalLink, User, Building2, FileText, Image as ImageIcon, ClipboardCheck } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, ExternalLink, User, FileText, Image as ImageIcon, ClipboardCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import styles from './modal.module.css';
 import { KYCRequest, KYCStatus } from '@/types';
@@ -93,6 +93,10 @@ export default function KYCModal({ request, isOpen, onClose, onUpdateStatus }: K
                     <span className={styles.value}>{request.email}</span>
                   </div>
                   <div className={styles.infoItem}>
+                    <span className={styles.label}>Phone Number</span>
+                    <span className={styles.value}>{request.phoneNumber || 'N/A'}</span>
+                  </div>
+                  <div className={styles.infoItem}>
                     <span className={styles.label}>Aadhaar Number</span>
                     <span className={styles.value}>{request.aadhaarNumber || 'N/A'}</span>
                   </div>
@@ -121,29 +125,7 @@ export default function KYCModal({ request, isOpen, onClose, onUpdateStatus }: K
                 </div>
               </div>
 
-              <div className={styles.section}>
-                <h3 className={styles.sectionTitle}>
-                  <Building2 size={16} /> Bank Information
-                </h3>
-                <div className={styles.bankCard}>
-                  <div className={styles.infoItem}>
-                    <span className={styles.label}>Bank Name</span>
-                    <span className={styles.value}>{request.bankDetails.bankName}</span>
-                  </div>
-                  <div className={styles.infoItem}>
-                    <span className={styles.label}>Account Number</span>
-                    <span className={styles.value}>{request.bankDetails.accountNumber}</span>
-                  </div>
-                  <div className={styles.infoItem}>
-                    <span className={styles.label}>Account Holder</span>
-                    <span className={styles.value}>{request.bankDetails.accountHolder}</span>
-                  </div>
-                  <div className={styles.infoItem}>
-                    <span className={styles.label}>IFSC Code</span>
-                    <span className={styles.value}>{request.bankDetails.ifscCode}</span>
-                  </div>
-                </div>
-              </div>
+
 
               <div className={styles.section}>
                 <h3 className={styles.sectionTitle}>

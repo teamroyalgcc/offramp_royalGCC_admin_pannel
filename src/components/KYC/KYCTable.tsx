@@ -28,8 +28,7 @@ export default function KYCTable({ data, onRowClick }: KYCTableProps) {
   const filteredData = useMemo(() => {
     return data.filter(item => 
       (item.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item?.bankDetails?.bankName || '').toLowerCase().includes(searchTerm.toLowerCase())
+      (item.id || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [data, searchTerm]);
 
@@ -90,8 +89,6 @@ export default function KYCTable({ data, onRowClick }: KYCTableProps) {
             <tr>
               <th>ID</th>
               <th>User</th>
-              <th>Bank Name</th>
-              <th>Account Number</th>
               <th>Status</th>
               <th>Submitted At</th>
               <th></th>
@@ -109,8 +106,7 @@ export default function KYCTable({ data, onRowClick }: KYCTableProps) {
                     <span>{item.userName || 'Unknown'}</span>
                   </div>
                 </td>
-                <td>{item.bankDetails.bankName}</td>
-                <td className={styles.date}>{item.bankDetails.accountNumber}</td>
+
                 <td>
                   <span className={`${styles.statusBadge} ${getStatusClass(item.status)}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content' }}>
                     {getStatusIcon(item.status)}
