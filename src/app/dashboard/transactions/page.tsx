@@ -69,17 +69,15 @@ export default function TransactionsPage() {
 
   const handleUpdateStatus = async (id: string, status: TransactionStatus, note: string = '') => {
     try {
-      // API expects uppercase status: "PENDING" | "PROCESSING" | "APPROVED" | "SUCCESS" | "FAILED" | "REFUNDED"
-      const apiStatus = status.toUpperCase();
-      await adminService.updateOrderStatus(id, { status: apiStatus, note });
-      toast.success(`Transaction ${id} updated to ${status}`);
-      
+      await adminService.updateOrderStatus(id, { status: status.toUpperCase(), note });
+      toast.success(status === 'success' ? 'Order marked as paid' : 'Order refunded to the user');
       setTransactions(prev => prev.map(t => 
         t.id === id ? { ...t, status } : t
       ));
-      setIsModalOpen(false);
+      return true;
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update transaction status');
+      toast.error(error.response?.data?.message || 'Failed to update the order');
+      return false;
     }
   };
 
@@ -88,8 +86,8 @@ export default function TransactionsPage() {
     <main className={styles.main}>
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>Transactions Management</h1>
-          <p className={styles.subtitle}>Manage and monitor all financial activities</p>
+          <h1 className={styles.title}>Sell Orders (USDT → INR)</h1>
+          <p className={styles.subtitle}>For each Processing order: send the INR to the user's bank, then open the order and mark it as paid with the UTR.</p>
         </div>
         <div className={styles.headerActions}>
           <button className={styles.refreshButton} onClick={() => window.location.reload()}>

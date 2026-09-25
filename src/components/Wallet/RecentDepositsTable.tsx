@@ -1,56 +1,56 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Search, 
-  ArrowUpDown,
-  MoreVertical
-} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Search, ExternalLink } from 'lucide-react';
 import styles from '@/components/Shared/table.module.css';
-import { Transaction } from '@/types';
 
-interface RecentDepositsTableProps {
-  data: Transaction[];
+export interface Deposit {
+  id: string;
+  txId: string;
+  user: { id: string; email?: string; name?: string };
+  fromAddress: string;
+  depositAddress: string;
+  amount: string;
+  processingFee: string;
+  status: 'credited' | 'on_hold';
+  treasuryTransfer: 'done' | 'in_progress' | 'failed' | 'on_hold';
+  receivedAt: string;
 }
 
-export default function RecentDepositsTable({ data }: RecentDepositsTableProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+const TRANSFER_LABEL: Record<Deposit['treasuryTransfer'], [string, string]> = {
+  done: ['Moved to treasury', styles.statusSuccess],
+  in_progress: ['Moving to treasury', styles.statusProcessing],
+  failed: ['Transfer failed', styles.statusFailed],
+  on_hold: ['On hold', styles.statusPending],
+};
 
-  // Filter only deposits
-  const depositData = useMemo(() => {
-    return data.filter(item => item.type === 'deposit');
-  }, [data]);
+const PAGE = 10;
 
-  const filteredData = useMemo(() => {
-    return depositData.filter((item:any) => 
-      (item.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item?.bankDetails?.bankName || '').toLowerCase().includes(searchTerm.toLowerCase())
+export default function RecentDepositsTable({ data }: { data: Deposit[] }) {
+  const [q, setQ] = useState('');
+  const [page, setPage] = useState(1);
+
+  const rows = useMemo(() => {
+    const s = q.toLowerCase();
+    return data.filter((d) =>
+      [d.user.email, d.user.name, d.txId, d.fromAddress].some((v) => (v || '').toLowerCase().includes(s)),
     );
-  }, [depositData, searchTerm]);
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  }, [data, q]);
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE));
+  const shown = rows.slice((page - 1) * PAGE, page * PAGE);
 
   return (
     <div className={styles.tableContainer}>
       <div className={styles.tableHeader}>
-        <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>Recent Wallet Deposits</h3>
+        <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>USDT Deposits</h3>
         <div className={styles.searchWrapper}>
           <Search size={18} className={styles.searchIcon} />
-          <input 
-            type="text" 
-            placeholder="Search deposits..." 
+          <input
+            type="text"
+            placeholder="Search by user, email or tx..."
             className={styles.searchInput}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={q}
+            onChange={(e) => { setQ(e.target.value); setPage(1); }}
           />
         </div>
       </div>
@@ -59,89 +59,57 @@ export default function RecentDepositsTable({ data }: RecentDepositsTableProps) 
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>TNX ID</th>
-              <th>User Name</th>
-              <th>User ID</th>
-              <th>Bank Account</th>
-              <th>Bank Name</th>
-              <th>
-                <div className={styles.thContent}>
-                  Amount <ArrowUpDown size={14} />
-                </div>
-              </th>
-              <th>Date & Time</th>
-              <th></th>
+              <th>User</th>
+              <th>Amount</th>
+              <th>Fee</th>
+              <th>Credited to user</th>
+              <th>Treasury</th>
+              <th>Received</th>
+              <th>Tx</th>
             </tr>
           </thead>
           <tbody>
-            {paginatedData.map((item) => (
-              <tr key={item.id} className={styles.tableRow}>
-                <td><span className={styles.txId}>#{item.id}</span></td>
-                <td>
-                  <div className={styles.userInfo}>
-                    <div className={styles.userAvatar}>
-                      {(item.userName || 'U').charAt(0)}
+            {shown.length === 0 && (
+              <tr><td colSpan={7} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>No deposits yet</td></tr>
+            )}
+            {shown.map((d) => {
+              const [label, cls] = TRANSFER_LABEL[d.treasuryTransfer];
+              return (
+                <tr key={d.id} className={styles.tableRow}>
+                  <td>
+                    <div className={styles.userInfo}>
+                      <div className={styles.userAvatar}>{(d.user.name || d.user.email || 'U').charAt(0).toUpperCase()}</div>
+                      <span>{d.user.name || d.user.email || d.user.id}</span>
                     </div>
-                    <span>{item.userName || 'Unknown'}</span>
-                  </div>
-                </td>
-                <td><span className={styles.txId}>{item.userId}</span></td>
-                <td className={styles.date}>{item?.bankDetails?.accountNumber}</td>
-                <td>{item?.bankDetails?.bankName}</td>
-                <td>
-                  <span className={styles.amount}>
-                    {item.currency} {item.amount.toLocaleString()}
-                  </span>
-                </td>
-                <td className={styles.date}>
-                  {new Date(item.createdAt).toLocaleString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                  })}
-                </td>
-                <td>
-                  <button className={styles.moreButton}>
-                    <MoreVertical size={18} />
-                  </button>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td><span className={styles.amount}>{d.amount} USDT</span></td>
+                  <td>{d.processingFee}</td>
+                  <td>
+                    <span className={`${styles.statusBadge} ${d.status === 'credited' ? styles.statusSuccess : styles.statusPending}`}>
+                      {d.status === 'credited' ? 'Credited' : 'On hold (below minimum)'}
+                    </span>
+                  </td>
+                  <td><span className={`${styles.statusBadge} ${cls}`}>{label}</span></td>
+                  <td className={styles.date}>{new Date(d.receivedAt).toLocaleString()}</td>
+                  <td>
+                    <a href={`https://tronscan.org/#/transaction/${d.txId}`} target="_blank" rel="noreferrer" title="View on Tronscan">
+                      <ExternalLink size={16} />
+                    </a>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       <div className={styles.pagination}>
         <p className={styles.paginationText}>
-          Showing <span>{(currentPage - 1) * itemsPerPage + 1}</span> to <span>{Math.min(currentPage * itemsPerPage, filteredData.length)}</span> of <span>{filteredData.length}</span> results
+          Page <span>{page}</span> of <span>{pages}</span> · <span>{rows.length}</span> deposits
         </p>
         <div className={styles.paginationButtons}>
-          <button 
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => prev - 1)}
-            className={styles.pageButton}
-          >
-            <ChevronLeft size={18} />
-          </button>
-          {[...Array(totalPages)].map((_, i) => (
-            <button 
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`${styles.pageButton} ${currentPage === i + 1 ? styles.pageActive : ''}`}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button 
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(prev => prev + 1)}
-            className={styles.pageButton}
-          >
-            <ChevronRight size={18} />
-          </button>
+          <button disabled={page === 1} onClick={() => setPage(page - 1)} className={styles.pageButton}>‹</button>
+          <button disabled={page === pages} onClick={() => setPage(page + 1)} className={styles.pageButton}>›</button>
         </div>
       </div>
     </div>

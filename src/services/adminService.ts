@@ -32,12 +32,32 @@ export const adminService = {
     const response = await api.get('/api/admin/deposits');
     return response.data;
   },
-  approveDeposit: async (txHash: string) => {
-    const response = await api.post(`/api/admin/deposits/${txHash}/approve`);
+  /** Items needing a human, each with a plain-language explanation and an optional action. */
+  getDepositHealth: async () => {
+    const response = await api.get('/api/admin/deposits/health');
     return response.data;
   },
-  manualCredit: async (payload: { userId: string; amount: number; txHash: string }) => {
-    const response = await api.post('/api/admin/manual-credit', payload);
+  runDepositCheck: async () => {
+    const response = await api.post('/api/admin/deposits/audit');
+    return response.data;
+  },
+  /** Runs the action the backend attached to a health item (retry, credit, check again). */
+  runAction: async (action: { method: string; path: string }) => {
+    const response = await api.request({ method: action.method, url: action.path });
+    return response.data;
+  },
+
+  // --- USDT WITHDRAWALS (paid by hand from the treasury wallet) ---
+  listWithdrawals: async () => {
+    const response = await api.get('/api/admin/withdrawals');
+    return response.data;
+  },
+  markWithdrawalSent: async (id: string, txHash: string) => {
+    const response = await api.post(`/api/admin/withdrawals/${id}/approve`, { tx_hash: txHash });
+    return response.data;
+  },
+  rejectWithdrawal: async (id: string, reason: string) => {
+    const response = await api.post(`/api/admin/withdrawals/${id}/reject`, { reason });
     return response.data;
   },
 

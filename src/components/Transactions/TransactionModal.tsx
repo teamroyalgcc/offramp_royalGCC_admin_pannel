@@ -11,18 +11,33 @@ interface TransactionModalProps {
   transaction: Transaction | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdateStatus: (id: string, status: TransactionStatus, note: string) => void;
+  onUpdateStatus: (id: string, status: TransactionStatus, note: string) => Promise<boolean>;
 }
 
+const OPEN_STATUSES = ['pending', 'processing', 'approved'];
+
 export default function TransactionModal({ transaction, isOpen, onClose, onUpdateStatus }: TransactionModalProps) {
-  const [selectedStatus, setSelectedStatus] = useState<TransactionStatus>(transaction?.status || 'pending');
+  const [selectedStatus, setSelectedStatus] = useState<TransactionStatus>('success');
   const [note, setNote] = useState('');
+  const [saving, setSaving] = useState(false);
 
   if (!isOpen || !transaction) return null;
 
-  const handleUpdate = () => {
-    onUpdateStatus(transaction.id, selectedStatus, note);
-    onClose();
+  const isOpenOrder = OPEN_STATUSES.includes(transaction.status);
+  const paying = selectedStatus === 'success';
+
+  const handleUpdate = async () => {
+    if (!note.trim()) {
+      toast.error(paying ? 'Enter the bank reference / UTR first' : 'Enter the reason first');
+      return;
+    }
+    setSaving(true);
+    const ok = await onUpdateStatus(transaction.id, selectedStatus, note.trim());
+    setSaving(false);
+    if (ok) {
+      setNote('');
+      onClose();
+    }
   };
 
 
@@ -129,36 +144,45 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
             </div>
           </div>
 
-          <div className={styles.section}>
-            <CustomSelect
-              label="Update Status"
-              value={selectedStatus}
-              onChange={(val) => setSelectedStatus(val as TransactionStatus)}
-              options={[
-                { label: 'Pending / Initial', value: 'pending' },
-                { label: 'Approve Payout (Step 1)', value: 'approved' },
-                { label: 'Finalize Success (Step 2)', value: 'success' },
-                { label: 'Mark as Failed', value: 'failed' },
-                { label: 'Mark as Refunded', value: 'refunded' },
-              ]}
-              icon={Clock}
-            />
-          </div>
+          {isOpenOrder ? (
+            <>
+              <div className={styles.section}>
+                <CustomSelect
+                  label="What happened?"
+                  value={selectedStatus}
+                  onChange={(val) => setSelectedStatus(val as TransactionStatus)}
+                  options={[
+                    { label: `Paid: I sent ₹${transaction.inr_amount?.toLocaleString() ?? ''} to this bank account`, value: 'success' },
+                    { label: 'Refund: could not pay, return the USDT to the user', value: 'refunded' },
+                  ]}
+                  icon={Clock}
+                />
+              </div>
 
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Add Note</h3>
-            <textarea
-              className={styles.noteInput}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="e.g. Paid via IMPS"
-            />
-          </div>
+              <div className={styles.section}>
+                <h3 className={styles.sectionTitle}>{paying ? 'Bank reference / UTR (required)' : 'Reason (required, the user will see it)'}</h3>
+                <textarea
+                  className={styles.noteInput}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder={paying ? 'e.g. IMPS UTR 412345678901' : 'e.g. Bank account details are wrong'}
+                />
+              </div>
+            </>
+          ) : (
+            <div className={styles.section}>
+              <p className={styles.noData}>This order is completed ({transaction.status}). No further action needed.</p>
+            </div>
+          )}
         </div>
 
         <div className={styles.footer}>
           <button className={styles.cancelButton} onClick={onClose}>Cancel</button>
-          <button className={styles.saveButton} onClick={handleUpdate}>Save Changes</button>
+          {isOpenOrder && (
+            <button className={styles.saveButton} onClick={handleUpdate} disabled={saving}>
+              {saving ? 'Saving...' : paying ? 'Confirm paid' : 'Refund user'}
+            </button>
+          )}
         </div>
       </div>
     </div>

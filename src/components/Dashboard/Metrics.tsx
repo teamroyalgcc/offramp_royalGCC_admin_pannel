@@ -4,7 +4,8 @@ import {
   Clock, 
   ShieldCheck,
   ArrowRightLeft,
-  DownloadCloud
+  DownloadCloud,
+  AlertTriangle
 } from 'lucide-react';
 
 import styles from './metrics.module.css';
@@ -44,10 +45,17 @@ export default function MetricsGrid({ data }: { data?: any }) {
       subtitle: data?.treasury?.address || '',
     },
     {
+      title: 'Deposit items needing attention',
+      value: data?.stats?.depositItemsNeedingAttention?.toString() || '0',
+      icon: AlertTriangle,
+      color: '#ef4444',
+    },
+    {
       title: 'Treasury TRX',
       value: data?.treasury?.trx !== undefined ? `${parseFloat(data.treasury.trx).toLocaleString()} TRX` : '0 TRX',
       icon: Coins,
-      color: '#ef4444',
+      color: '#64748b',
+      subtitle: 'Only needed to send USDT withdrawals by hand',
     },
     {
       title: 'Pending Orders',

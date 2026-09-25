@@ -16,15 +16,17 @@ import {
   Shield,
   TrendingUp,
   X,
-  Settings
+  Settings,
+  Send
 } from 'lucide-react';
 
 import styles from './sidebar.module.css';
 import { adminService } from '@/services/adminService';
 
 const menuItems = [
-  { icon: Wallet, label: 'Wallet', href: '/dashboard' },
-  { icon: ArrowRightLeft, label: 'Transactions', href: '/dashboard/transactions' },
+  { icon: Wallet, label: 'Dashboard', href: '/dashboard' },
+  { icon: ArrowRightLeft, label: 'Sell Orders (INR)', href: '/dashboard/transactions' },
+  { icon: Send, label: 'USDT Withdrawals', href: '/dashboard/withdrawals' },
   { icon: ShieldCheck, label: 'KYC', href: '/dashboard/kyc' },
   { icon: TrendingUp, label: 'Rates', href: '/dashboard/rates' },
   { icon: Users, label: 'Users', href: '/dashboard/users' },
@@ -58,7 +60,6 @@ export default function Sidebar() {
   }, []);
 
   const filteredMenuItems = menuItems.filter(item => {
-    console.log(admin)
     if (item.superAdminOnly) {
       return admin?.role === 'superadmin';
     }
