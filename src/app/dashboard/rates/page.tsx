@@ -19,10 +19,9 @@ interface RateInfo {
 }
 
 const SOURCE_LABELS: Record<string, string> = {
-  binance_p2p: 'Binance P2P',
-  okx_p2p: 'OKX P2P',
   coindcx: 'CoinDCX',
   wazirx: 'WazirX',
+  zebpay: 'ZebPay',
 };
 
 const fmt = (n: number | null | undefined) => (n == null ? '---' : `${Number(n).toFixed(2)} INR`);
@@ -230,7 +229,7 @@ export default function RatesPage() {
             <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
               <Info size={20} style={{ color: '#3b82f6', flexShrink: 0 }} />
               <p className={styles.infoText} style={{ color: '#1e293b' }}>
-                Users get the lowest live market price minus the spread. Lower rate = less INR paid per USDT.
+                Users get the lowest exchange price (what CoinDCX / WazirX / ZebPay pay for USDT) minus the spread. Lower rate = less INR paid per USDT.
               </p>
             </div>
           </div>
