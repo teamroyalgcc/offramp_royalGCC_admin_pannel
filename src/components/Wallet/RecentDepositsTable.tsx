@@ -11,7 +11,6 @@ export interface Deposit {
   fromAddress: string;
   depositAddress: string;
   amount: string;
-  processingFee: string;
   status: 'credited' | 'on_hold';
   treasuryTransfer: 'done' | 'in_progress' | 'failed' | 'on_hold';
   receivedAt: string;
@@ -61,7 +60,6 @@ export default function RecentDepositsTable({ data }: { data: Deposit[] }) {
             <tr>
               <th>User</th>
               <th>Amount</th>
-              <th>Fee</th>
               <th>Credited to user</th>
               <th>Treasury</th>
               <th>Received</th>
@@ -70,7 +68,7 @@ export default function RecentDepositsTable({ data }: { data: Deposit[] }) {
           </thead>
           <tbody>
             {shown.length === 0 && (
-              <tr><td colSpan={7} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>No deposits yet</td></tr>
+              <tr><td colSpan={6} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>No deposits yet</td></tr>
             )}
             {shown.map((d) => {
               const [label, cls] = TRANSFER_LABEL[d.treasuryTransfer];
@@ -83,7 +81,6 @@ export default function RecentDepositsTable({ data }: { data: Deposit[] }) {
                     </div>
                   </td>
                   <td><span className={styles.amount}>{d.amount} USDT</span></td>
-                  <td>{d.processingFee}</td>
                   <td>
                     <span className={`${styles.statusBadge} ${d.status === 'credited' ? styles.statusSuccess : styles.statusPending}`}>
                       {d.status === 'credited' ? 'Credited' : 'On hold (below minimum)'}
