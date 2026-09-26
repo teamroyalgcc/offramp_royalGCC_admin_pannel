@@ -88,12 +88,18 @@ export const adminService = {
   },
 
   // --- CONFIG / RATES ---
+  // { rate, marketRate, spreadPercent, source, sources, updatedAt, mode, manualRate, manualRateExpiresAt }
   getLiveRate: async () => {
     const response = await api.get('/api/exchange/rate');
-    return response.data; // { rate: number }
+    return response.data;
   },
   updateExchangeSpread: async (spreadPercent: number) => {
     const response = await api.post('/api/admin/settings/rate', { spreadPercent });
+    return response.data;
+  },
+  // number: fixed user rate for 24 h (capped at the live market by the backend); null: clear
+  setManualRate: async (manualRate: number | null) => {
+    const response = await api.post('/api/admin/settings/rate', { manualRate });
     return response.data;
   },
 
