@@ -1,0 +1,11 @@
+// Cloudflare Workers Builds: serve the static export (`next build` -> out/) as assets.
+// Without this file `wrangler deploy` tries to convert the app to OpenNext and fails.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "royalgcc-admin",
+  "compatibility_date": "2026-09-25",
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "404-page"
+  }
+}
