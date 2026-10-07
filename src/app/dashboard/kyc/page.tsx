@@ -8,35 +8,6 @@ import { KYCRequest, KYCStatus } from '@/types';
 import styles from '../transactions/dashboard.module.css';
 import TableSkeleton from '@/components/Shared/TableSkeleton';
 
-// ... (generateMockKYCRequests follows)
-
-// Mock data generator for KYC
-const generateMockKYCRequests = (count: number): KYCRequest[] => {
-  const statuses: KYCStatus[] = ['pending', 'approved', 'rejected'];
-  const names = ['John Doe', 'Jane Smith', 'Robert Johnson', 'Michael Brown', 'Emily Davis'];
-
-  return Array.from({ length: count }, (_, i) => ({
-    id: `KYC${2000 + i}`,
-    userId: `USR${500 + i}`,
-    userName: names[i % names.length],
-    email: `${names[i % names.length].toLowerCase().replace(' ', '.')}@example.com`,
-    phoneNumber: `+91 ${9000000000 + i}`,
-    submittedAt: new Date(Date.now() - Math.random() * 100000000).toISOString(),
-    status: statuses[i % statuses.length],
-    documents: {
-      idCardFront: 'id_front.jpg',
-      idCardBack: 'id_back.jpg',
-      selfie: 'selfie.jpg',
-    },
-    bankDetails: {
-      bankName: 'Global Bank',
-      accountNumber: `****${Math.floor(1000 + Math.random() * 9000)}`,
-      accountHolder: names[i % names.length],
-      ifscCode: 'GLOB0001234',
-    }
-  }));
-};
-
 import { adminService } from '@/services/adminService';
 import { toast } from 'sonner';
 
@@ -65,7 +36,7 @@ export default function KYCPage() {
              idCardFront: r.aadhaar_photo_url || r.aadhaar_image || ''
           },
           bankDetails: {
-            bankName: 'N/A', // Usually resolved from IFSC if needed
+            bankName: '', // users rows have no bank name; the payout bank is on the order
             accountNumber: r.account_number || '',
             accountHolder: r.account_holder_name || '',
             ifscCode: r.ifsc_code || ''

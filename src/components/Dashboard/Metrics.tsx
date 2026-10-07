@@ -39,39 +39,39 @@ export default function MetricsGrid({ data }: { data?: any }) {
   const metrics = [
     {
       title: 'Treasury USDT',
-      value: data?.treasury?.usdt !== undefined ? `${parseFloat(data.treasury.usdt).toLocaleString()} USDT` : '0 USDT',
+      value: data?.treasury?.usdt !== undefined ? `${parseFloat(data.treasury.usdt).toLocaleString()} USDT` : '—',
       icon: Wallet,
       color: '#3b82f6',
       subtitle: data?.treasury?.address || '',
     },
     {
       title: 'Deposit items needing attention',
-      value: data?.stats?.depositItemsNeedingAttention?.toString() || '0',
+      value: data?.stats?.depositItemsNeedingAttention?.toString() ?? '—',
       icon: AlertTriangle,
       color: '#ef4444',
     },
     {
       title: 'Treasury TRX',
-      value: data?.treasury?.trx !== undefined ? `${parseFloat(data.treasury.trx).toLocaleString()} TRX` : '0 TRX',
+      value: data?.treasury?.trx !== undefined ? `${parseFloat(data.treasury.trx).toLocaleString()} TRX` : '—',
       icon: Coins,
       color: '#64748b',
       subtitle: 'Only needed to send USDT withdrawals by hand',
     },
     {
       title: 'Pending Orders',
-      value: data?.stats?.pendingOrders?.toString() || '0',
+      value: data?.stats?.pendingOrders?.toString() ?? '—',
       icon: ArrowRightLeft,
       color: '#f59e0b',
     },
     {
       title: 'Pending KYC',
-      value: data?.stats?.pendingKYC?.toString() || '0',
+      value: data?.stats?.pendingKYC?.toString() ?? '—',
       icon: ShieldCheck,
       color: '#10b981',
     },
     {
       title: 'Pending Withdrawals',
-      value: data?.stats?.pendingWithdrawals?.toString() || '0',
+      value: data?.stats?.pendingWithdrawals?.toString() ?? '—',
       icon: DownloadCloud,
       color: '#6366f1',
     }

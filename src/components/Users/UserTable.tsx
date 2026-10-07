@@ -72,7 +72,7 @@ export default function UserTable({ data, onFreezeUser }: UserTableProps) {
             <tr>
               <th>ID</th>
               <th>User</th>
-              <th className={styles.hideOnMobile}>Bank Name</th>
+              <th className={styles.hideOnMobile}>IFSC</th>
               <th>Account Number</th>
               <th>Status</th>
               <th className={styles.hideOnMobile}>Joined At</th>

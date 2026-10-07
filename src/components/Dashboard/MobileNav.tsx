@@ -12,7 +12,6 @@ export default function MobileNav() {
     if (path === '/dashboard/transactions') return 'Transactions';
     if (path === '/dashboard/kyc') return 'KYC Review';
     if (path === '/dashboard/role-management') return 'Role Management';
-    if (path === '/dashboard/profile') return 'Profile';
     return 'Dashboard';
   };
 

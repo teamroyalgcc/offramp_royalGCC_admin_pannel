@@ -39,10 +39,10 @@ export default function TransactionsPage() {
           currency: 'USDT',
           status: (d.status || 'pending').toLowerCase() as TransactionStatus,
           createdAt: d.created_at || new Date().toISOString(),
-          gatewayRefId: d.gateway_ref_id,
+          gatewayRefId: d.payout_reference,
           failureReason: d.failure_reason,
           bankDetails: d.bank_accounts ? {
-            bankName: 'N/A',
+            bankName: d.bank_accounts.bank_name || '',
             accountNumber: d.bank_accounts.account_number,
             accountHolder: d.bank_accounts.account_holder_name,
             ifscCode: d.bank_accounts.ifsc_code,

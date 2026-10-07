@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Admin Portal",
-  description: "Admin portal for managing fintech ecosystem",
+  title: "Royal GCC Admin",
+  description: "Royal GCC Forex admin panel",
 };
 
 import { Toaster } from 'sonner';

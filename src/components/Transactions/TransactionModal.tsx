@@ -78,10 +78,12 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
             <div className={styles.bankCard}>
               {transaction.bankDetails ? (
                 <>
-                  <div className={styles.infoItem}>
-                    <span className={styles.label}>Bank Name</span>
-                    <span className={styles.value}>{transaction.bankDetails.bankName}</span>
-                  </div>
+                  {transaction.bankDetails.bankName && (
+                    <div className={styles.infoItem}>
+                      <span className={styles.label}>Bank Name</span>
+                      <span className={styles.value}>{transaction.bankDetails.bankName}</span>
+                    </div>
+                  )}
                   <div className={styles.infoItem}>
                     <span className={styles.label}>Account Holder</span>
                     <span className={styles.value}>{transaction.bankDetails.accountHolder}</span>
@@ -141,7 +143,7 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
               )}
               {transaction.gatewayRefId && (
                 <div className={styles.infoItem}>
-                  <span className={styles.label}>Gateway Ref</span>
+                  <span className={styles.label}>Bank reference / UTR</span>
                   <span className={styles.value}>{transaction.gatewayRefId}</span>
                 </div>
               )}
