@@ -45,7 +45,8 @@ export default function TransactionsPage() {
             bankName: 'N/A',
             accountNumber: d.bank_accounts.account_number,
             accountHolder: d.bank_accounts.account_holder_name,
-            ifscCode: d.bank_accounts.ifsc_code
+            ifscCode: d.bank_accounts.ifsc_code,
+            kycName: d.users?.account_holder_name
           } : undefined
         }));
         

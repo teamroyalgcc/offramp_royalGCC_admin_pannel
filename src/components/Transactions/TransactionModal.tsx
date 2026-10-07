@@ -87,6 +87,16 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
                     <span className={styles.value}>{transaction.bankDetails.accountHolder}</span>
                   </div>
                   <div className={styles.infoItem}>
+                    <span className={styles.label}>KYC Name</span>
+                    {/* Pay only when the bank holder matches the KYC name (mule-account check). */}
+                    <span className={styles.value} style={
+                      (transaction.bankDetails.kycName || '').trim().toLowerCase() !== transaction.bankDetails.accountHolder.trim().toLowerCase()
+                        ? { color: '#ef4444' } : undefined
+                    }>
+                      {transaction.bankDetails.kycName || 'Not on file'}
+                    </span>
+                  </div>
+                  <div className={styles.infoItem}>
                     <span className={styles.label}>Account Number</span>
                     <span className={styles.value}>{transaction.bankDetails.accountNumber}</span>
                   </div>

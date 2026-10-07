@@ -6,6 +6,7 @@ export interface BankDetails {
   accountNumber: string;
   accountHolder: string;
   ifscCode: string;
+  kycName?: string; // name from the user's approved KYC; the payout bank holder should match it
 }
 
 export interface Transaction {
