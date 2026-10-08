@@ -111,6 +111,7 @@ export default function TransactionsPage() {
 
 
       <TransactionModal 
+        key={isModalOpen ? selectedTransaction?.id : 'closed'}
         transaction={selectedTransaction}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

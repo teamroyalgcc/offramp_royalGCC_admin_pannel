@@ -122,6 +122,7 @@ export default function KYCPage() {
       </section>
 
       <KYCModal 
+        key={isModalOpen ? selectedRequest?.id : 'closed'}
         request={selectedRequest}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

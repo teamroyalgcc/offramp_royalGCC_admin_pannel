@@ -7,13 +7,14 @@ import { Percent, TrendingUp, Save, Loader2, Info, RefreshCw, Calculator, Lock, 
 import styles from './rate.module.css';
 
 interface RateInfo {
-  rate: number;
+  rate: number | null; // null: no trustworthy rate, sells paused (pausedReason says why)
+  pausedReason?: string | null;
   marketRate: number | null;
   spreadPercent: number;
   source: string | null;
   sources?: Record<string, number | null>;
   updatedAt: string | null;
-  mode: 'live' | 'manual';
+  mode: 'live' | 'manual' | null;
   manualRate: number | null;
   manualRateExpiresAt: string | null;
 }
@@ -44,7 +45,7 @@ export default function RatesPage() {
     try {
       const data: RateInfo = await adminService.getLiveRate();
       setInfo(data);
-      setRateError(null);
+      setRateError(data.rate === null ? data.pausedReason || 'No trustworthy rate' : null);
       if (loadSpread) setSpreadPercent(String(data.spreadPercent));
     } catch (error: any) {
       setInfo(null);
@@ -78,6 +79,11 @@ export default function RatesPage() {
   const applyOverride = async (value: number | null) => {
     if (value !== null && (isNaN(value) || value <= 0)) {
       toast.error('Enter a valid rate in INR per USDT');
+      return;
+    }
+    const market = info?.marketRate;
+    if (value !== null && market && Math.abs(value / market - 1) > 0.03 &&
+        !confirm(`${value.toFixed(2)} INR is ${((1 - value / market) * 100).toFixed(1)}% below the live market (${market.toFixed(2)}). Users get this rate for 24 hours. Continue?`)) {
       return;
     }
     setOverriding(true);
@@ -118,7 +124,7 @@ export default function RatesPage() {
             <AlertTriangle size={22} style={{ color: '#dc2626', flexShrink: 0 }} />
             <div>
               <p style={{ fontWeight: 600, color: '#991b1b' }}>Live rate unavailable: sells are paused</p>
-              <p className={styles.infoText} style={{ color: '#7f1d1d' }}>{rateError}. Set a fixed rate below to resume sells, or refresh in a minute.</p>
+              <p className={styles.infoText} style={{ color: '#7f1d1d' }}>{rateError}. Sells resume when at least two exchanges report a price again; refresh in a minute.</p>
             </div>
           </div>
         </div>
@@ -194,7 +200,7 @@ export default function RatesPage() {
                   <p className={styles.effectiveTitle}>
                     Users Get Now {manualActive ? '(fixed rate)' : info ? `(market − ${info.spreadPercent}%)` : ''}
                   </p>
-                  <p className={styles.effectiveValue}>1 USDT = {info ? Number(info.rate).toFixed(2) : '---'} INR</p>
+                  <p className={styles.effectiveValue}>1 USDT = {info?.rate != null ? Number(info.rate).toFixed(2) : '---'} INR</p>
                 </div>
               </div>
             </div>
@@ -272,7 +278,7 @@ export default function RatesPage() {
           <button
             type="button"
             className={styles.button}
-            disabled={overriding || !manualRate}
+            disabled={overriding || !manualRate || info?.marketRate == null}
             onClick={() => applyOverride(parseFloat(manualRate))}
           >
             {overriding ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
@@ -292,7 +298,7 @@ export default function RatesPage() {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
             <Info size={20} style={{ color: '#3b82f6', flexShrink: 0 }} />
             <p className={styles.infoText} style={{ color: '#1e293b' }}>
-              Users get this rate for 24 h. It can never be higher than the live market; if live prices are unavailable, this rate is used until it expires.
+              Users get this rate for 24 h. It can never be higher than the live market and must be within 10% under it, so it can only be set while live prices work; if they go down later, this rate is used until it expires.
             </p>
           </div>
         </div>

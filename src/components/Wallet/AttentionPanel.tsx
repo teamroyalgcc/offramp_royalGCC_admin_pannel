@@ -96,7 +96,7 @@ export default function AttentionPanel({ onChanged }: { onChanged?: () => void }
             <button
               className={styles.button}
               disabled={busy !== null}
-              onClick={() => run(item.id, () => adminService.runAction(item.action!), 'Done.')}
+              onClick={() => confirm(`${item.action!.label}?\n\n${item.title}\n${[item.user, item.address].filter(Boolean).join(' · ')}`) && run(item.id, () => adminService.runAction(item.action!), 'Done.')}
             >
               {busy === item.id ? 'Working...' : item.action.label}
             </button>

@@ -22,7 +22,8 @@ export default function KYCModal({ request, isOpen, onClose, onUpdateStatus }: K
   if (!isOpen || !request) return null;
 
   const handleConfirm = () => {
-    onUpdateStatus(request.id, selectedStatus, reason);
+    if (selectedStatus === 'rejected' && !reason.trim()) return; // the user sees this reason
+    onUpdateStatus(request.id, selectedStatus, reason.trim());
     setIsConfirming(false);
     onClose();
   };
@@ -191,7 +192,7 @@ export default function KYCModal({ request, isOpen, onClose, onUpdateStatus }: K
                       <button 
                         className={styles.primaryActionButton} 
                         onClick={() => setIsConfirming(true)}
-                        disabled={selectedStatus === request.status}
+                        disabled={selectedStatus === request.status || (selectedStatus === 'rejected' && !reason.trim())}
                       >
                         {selectedStatus === 'approved' ? 'Approve Account' : selectedStatus === 'rejected' ? 'Reject Application' : 'Save Changes'}
                       </button>
