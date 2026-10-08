@@ -16,6 +16,7 @@ interface Sweep {
   txId: string | null;
   lastError: string | null;
   sweepNow: boolean;
+  canRetry: boolean;
   address: string;
   user: string | null;
   createdAt: string;
@@ -77,6 +78,20 @@ export default function SweepsPanel() {
       await load();
     } catch (e: any) {
       toast.error(e.response?.data?.message || e.response?.data?.error || 'Could not start the transfer');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const retry = async (id: string) => {
+    if (!confirm('Retry moving this balance to the treasury? Make sure Netts and the operating wallet have TRX first.')) return;
+    setBusy(id);
+    try {
+      await adminService.retrySweep(id);
+      toast.success('Retrying. Watch the status here; it usually takes 1 to 3 minutes.');
+      await load();
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || e.response?.data?.error || 'Could not retry the transfer');
     } finally {
       setBusy(null);
     }
@@ -174,6 +189,11 @@ export default function SweepsPanel() {
                       <button className={styles.filterButton} disabled={busy === s.id || s.sweepNow} onClick={() => sweepNow(s.id)}
                         style={busy === s.id || s.sweepNow ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}>
                         {s.sweepNow ? 'Starting…' : 'Sweep now'}
+                      </button>
+                    ) : s.canRetry ? (
+                      <button className={styles.filterButton} disabled={busy === s.id} onClick={() => retry(s.id)}
+                        style={busy === s.id ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}>
+                        Retry
                       </button>
                     ) : '–'}
                   </td>
