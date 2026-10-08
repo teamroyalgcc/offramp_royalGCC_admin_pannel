@@ -171,7 +171,8 @@ export default function SweepsPanel() {
                     {s.txId ? (
                       <a href={tronscan(`transaction/${s.txId}`)} target="_blank" rel="noreferrer" title="View on Tronscan"><ExternalLink size={16} /></a>
                     ) : s.status === 'pending' ? (
-                      <button className={styles.filterButton} disabled={busy === s.id || s.sweepNow} onClick={() => sweepNow(s.id)}>
+                      <button className={styles.filterButton} disabled={busy === s.id || s.sweepNow} onClick={() => sweepNow(s.id)}
+                        style={busy === s.id || s.sweepNow ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}>
                         {s.sweepNow ? 'Starting…' : 'Sweep now'}
                       </button>
                     ) : '–'}
