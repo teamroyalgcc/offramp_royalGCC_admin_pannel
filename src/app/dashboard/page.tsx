@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import RecentDepositsTable, { Deposit } from '@/components/Wallet/RecentDepositsTable';
 import AttentionPanel from '@/components/Wallet/AttentionPanel';
+import SweepsPanel from '@/components/Wallet/SweepsPanel';
 import styles from './transactions/dashboard.module.css';
 import { adminService } from '@/services/adminService';
 import { toast } from 'sonner';
@@ -46,6 +47,7 @@ export default function WalletDashboard() {
         <MetricsGrid data={metrics} />
         <AttentionPanel onChanged={fetchData} />
         {loading ? <TableSkeleton columns={7} /> : <RecentDepositsTable data={deposits} />}
+        <SweepsPanel />
       </section>
     </main>
   );

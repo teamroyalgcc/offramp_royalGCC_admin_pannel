@@ -41,6 +41,15 @@ export const adminService = {
     const response = await api.post('/api/admin/deposits/audit');
     return response.data;
   },
+  /** Transfers to treasury with energy costs, plus Netts / operating wallet balances. */
+  listSweeps: async () => {
+    const response = await api.get('/api/admin/sweeps');
+    return response.data;
+  },
+  sweepNow: async (id: string) => {
+    const response = await api.post(`/api/admin/sweeps/${id}/now`);
+    return response.data;
+  },
   /** Runs the action the backend attached to a health item (retry, credit, check again). */
   runAction: async (action: { method: string; path: string }) => {
     const response = await api.request({ method: action.method, url: action.path });
