@@ -1,8 +1,21 @@
 import api from '@/lib/axios';
 
+export interface AppRelease {
+  latestVersion: string | null;
+  minVersion: string | null;
+  apkUrl: string | null;
+  releaseNotes: string | null;
+}
+
+export interface AdminPayload {
+  username?: string;
+  password?: string;
+  role?: string;
+}
+
 export const adminService = {
   // --- AUTH ---
-  login: async (payload: any) => {
+  login: async (payload: { username: string; password: string }) => {
     const response = await api.post('/api/admin/login', payload);
     return response.data;
   },
@@ -101,7 +114,8 @@ export const adminService = {
   },
 
   // --- CONFIG / RATES ---
-  // { rate, marketRate, spreadPercent, source, sources, updatedAt, mode, manualRate, manualRateExpiresAt }
+  // { rate, mode, pausedReason, manualRate, manualRateExpiresAt, marketRate, spreadPercent, source, sources,
+  //   updatedAt, minSellUsdt, minWithdrawalUsdt, withdrawalFeeUsdt }
   getLiveRate: async () => {
     const response = await api.get('/api/exchange/rate');
     return response.data;
@@ -110,9 +124,21 @@ export const adminService = {
     const response = await api.post('/api/admin/settings/rate', { spreadPercent });
     return response.data;
   },
-  // number: fixed user rate for 24 h (capped at the live market by the backend); null: clear
+  // number (50..500): the rate users get, used as-is until changed or cleared; null: clear it, the
+  // backend then falls back to the live market minus the spread.
   setManualRate: async (manualRate: number | null) => {
     const response = await api.post('/api/admin/settings/rate', { manualRate });
+    return response.data;
+  },
+
+  // --- APP RELEASE (mobile app update prompt) ---
+  // Public endpoint; axios baseURL has no /api prefix.
+  getAppVersion: async (): Promise<AppRelease> => {
+    const response = await api.get('/api/app/version');
+    return response.data;
+  },
+  updateAppRelease: async (payload: Partial<AppRelease>) => {
+    const response = await api.post('/api/admin/settings/app-release', payload);
     return response.data;
   },
 
@@ -129,11 +155,11 @@ export const adminService = {
     const response = await api.get('/api/admin/list');
     return response.data;
   },
-  addAdmin: async (payload: any) => {
+  addAdmin: async (payload: AdminPayload) => {
     const response = await api.post('/api/admin/add-admin', payload);
     return response.data;
   },
-  updateAdmin: async (id: string, payload: any) => {
+  updateAdmin: async (id: string, payload: AdminPayload) => {
     const response = await api.post(`/api/admin/${id}/update`, payload);
     return response.data;
   },

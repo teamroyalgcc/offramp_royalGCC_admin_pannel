@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { toast } from 'sonner';
+import axios, { AxiosError } from 'axios';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://api.royalgccforex.com',
@@ -28,8 +27,6 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    const message = error.response?.data?.message || error.message || 'Something went wrong';
-    
     if (error.response?.status === 401) {
       // Handle unauthorized error - maybe redirect to login
       if (typeof window !== 'undefined') {
@@ -39,14 +36,15 @@ api.interceptors.response.use(
       }
     }
 
-    // Only show toast if it's not a GET request (optional, but good for UX)
-    // if (error.config.method !== 'get') {
-    //   toast.error(message);
-    // }
-    
     return Promise.reject(error);
   }
 );
+
+/** The API's own error message (response.data.message) when there is one, otherwise the fallback. */
+export function apiErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
+  const err = error as AxiosError<{ message?: string; error?: string }> | undefined;
+  return err?.response?.data?.message || err?.response?.data?.error || fallback;
+}
 
 export default api;
 

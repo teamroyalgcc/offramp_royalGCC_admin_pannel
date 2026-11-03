@@ -12,9 +12,10 @@ import {
   Fingerprint
 } from 'lucide-react';
 import styles from '@/components/Shared/table.module.css';
+import { UserRow } from '@/types';
 
 interface UserTableProps {
-  data: any[];
+  data: UserRow[];
   onFreezeUser: (id: string, frozen: boolean) => void;
 }
 
@@ -27,7 +28,7 @@ export default function UserTable({ data, onFreezeUser }: UserTableProps) {
     return data.filter(item => 
       (item.account_holder_name || item.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.email.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.email || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [data, searchTerm]);
 
@@ -99,7 +100,7 @@ export default function UserTable({ data, onFreezeUser }: UserTableProps) {
                     {item.is_frozen ? 'Frozen' : 'Active'}
                   </span>
                 </td>
-                <td className={`${styles.date} ${styles.hideOnMobile}`}>{formatDate(item.created_at)}</td>
+                <td className={`${styles.date} ${styles.hideOnMobile}`}>{formatDate(item.created_at || '')}</td>
                 <td>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <button 

@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminService } from '@/services/adminService';
+import { apiErrorMessage } from '@/lib/axios';
 import { toast } from 'sonner';
-import { Lock, User, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Lock, User, Eye, EyeOff } from 'lucide-react';
 import styles from './login.module.css';
 
 export default function LoginPage() {
@@ -26,8 +27,8 @@ export default function LoginPage() {
       
       toast.success('Login successful');
       router.push('/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Invalid credentials');
+    } catch (error) {
+      toast.error(apiErrorMessage(error, 'Invalid credentials'));
     } finally {
       setLoading(false);
     }

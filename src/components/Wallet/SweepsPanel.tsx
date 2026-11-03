@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminService } from '@/services/adminService';
+import { apiErrorMessage } from '@/lib/axios';
 import styles from '@/components/Shared/table.module.css';
 
 interface Purchase { provider: string; costTrx: number; orderId: string | null; at: string }
@@ -76,8 +77,8 @@ export default function SweepsPanel() {
       await adminService.sweepNow(id);
       toast.success('Started. Watch the status here; it usually takes 1 to 3 minutes.');
       await load();
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || e.response?.data?.error || 'Could not start the transfer');
+    } catch (e) {
+      toast.error(apiErrorMessage(e, 'Could not start the transfer'));
     } finally {
       setBusy(null);
     }
@@ -90,8 +91,8 @@ export default function SweepsPanel() {
       await adminService.retrySweep(id);
       toast.success('Retrying. Watch the status here; it usually takes 1 to 3 minutes.');
       await load();
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || e.response?.data?.error || 'Could not retry the transfer');
+    } catch (e) {
+      toast.error(apiErrorMessage(e, 'Could not retry the transfer'));
     } finally {
       setBusy(null);
     }

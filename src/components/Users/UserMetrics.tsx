@@ -1,10 +1,10 @@
 'use client';
 
-import { Users, ShieldCheck, UserX, UserCheck } from 'lucide-react';
+import { Users, UserX, UserCheck } from 'lucide-react';
 import styles from '../KYC/metrics.module.css';
 
 interface UserMetricsProps {
-  users: any[];
+  users: { is_frozen?: boolean | null }[];
   activeFilter: 'all' | 'active' | 'frozen';
   onFilterChange: (status: 'all' | 'active' | 'frozen') => void;
 }
@@ -51,7 +51,7 @@ export default function UserMetrics({ users, activeFilter, onFilterChange }: Use
           <div 
             key={metric.id} 
             className={`${styles.metricCard} ${isActive ? styles.active : ''}`}
-            onClick={() => onFilterChange(metric.id as any)}
+            onClick={() => onFilterChange(metric.id as 'all' | 'active' | 'frozen')}
           >
             <div className={styles.cardHeader}>
               <div 

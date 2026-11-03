@@ -8,6 +8,7 @@ import AdminTable from '@/components/Admins/AdminTable';
 import AdminModal from '@/components/Admins/AdminModal';
 import ConfirmModal from '@/components/Shared/ConfirmModal';
 import { adminService } from '@/services/adminService';
+import { apiErrorMessage } from '@/lib/axios';
 import { AdminUser } from '@/types';
 import styles from '../transactions/dashboard.module.css';
 import TableSkeleton from '@/components/Shared/TableSkeleton';
@@ -40,13 +41,13 @@ export default function RoleManagementPage() {
       // Handle both {status: 'success', data: []} and direct []
       const adminData = Array.isArray(response) ? response : (response.data || []);
       
-      const mappedAdmins = adminData.map((a: any) => ({
+      const mappedAdmins = adminData.map((a: AdminUser & { created_at?: string }) => ({
         ...a,
         createdAt: a.created_at || a.createdAt
       }));
       setAdmins(mappedAdmins);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to fetch admins');
+    } catch (error) {
+      toast.error(apiErrorMessage(error, 'Failed to fetch admins'));
     } finally {
       setLoading(false);
     }
@@ -83,8 +84,8 @@ export default function RoleManagementPage() {
         } else {
           toast.error(response.message || 'Failed to revoke access');
         }
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || error.message || 'Failed to delete admin');
+      } catch (error) {
+        toast.error(apiErrorMessage(error, 'Failed to delete admin'));
       } finally {
         setIsConfirmOpen(false);
         setAdminToDelete(null);
@@ -120,8 +121,8 @@ export default function RoleManagementPage() {
           }
         }
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || error.message || 'Operation failed');
+    } catch (error) {
+      toast.error(apiErrorMessage(error, 'Operation failed'));
     }
   };
 
