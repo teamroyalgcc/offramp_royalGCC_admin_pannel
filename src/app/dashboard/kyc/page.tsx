@@ -9,6 +9,7 @@ import styles from '../transactions/dashboard.module.css';
 import TableSkeleton from '@/components/Shared/TableSkeleton';
 
 import { adminService } from '@/services/adminService';
+import { apiErrorMessage } from '@/lib/axios';
 import { toast } from 'sonner';
 
 export default function KYCPage() {
@@ -24,7 +25,7 @@ export default function KYCPage() {
       try {
         const data = await adminService.listKyc();
         // Assume API returns kyc_status which needs to be mapped to pending/approved/rejected
-        const mappedData = data.map((r: any) => ({
+        const mappedData = data.map((r: Record<string, string | null | undefined>) => ({
           ...r,
           id: r.id,
           userName: r.account_holder_name || 'Unknown',
@@ -53,7 +54,7 @@ export default function KYCPage() {
         }));
 
         setRequests(mappedData);
-      } catch (error: any) {
+      } catch {
         toast.error('Failed to fetch KYC requests');
       } finally {
         setLoading(false);
@@ -84,8 +85,8 @@ export default function KYCPage() {
         r.id === id ? { ...r, status } : r
       ));
       setIsModalOpen(false);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || `Failed to update KYC status`);
+    } catch (error) {
+      toast.error(apiErrorMessage(error, 'Failed to update KYC status'));
     }
   };
 

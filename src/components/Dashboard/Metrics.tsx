@@ -1,21 +1,39 @@
 import { 
   Wallet, 
   Coins, 
-  Clock, 
   ShieldCheck,
   ArrowRightLeft,
   DownloadCloud,
   AlertTriangle
 } from 'lucide-react';
 
+import type { LucideIcon } from 'lucide-react';
 import styles from './metrics.module.css';
 
 interface MetricCardProps {
   title: string;
   value: string;
-  icon: any;
+  icon: LucideIcon;
   color: string;
   subtitle?: string;
+}
+
+export interface DashboardMetrics {
+  /** null balance = the chain could not be read right now (shown as a dash, never as 0). */
+  treasury?: { address?: string; trx: number | string | null; usdt: number | string | null };
+  stats?: {
+    depositItemsNeedingAttention?: number;
+    pendingOrders?: number;
+    pendingKYC?: number;
+    pendingWithdrawals?: number;
+  };
+}
+
+/** Formats a chain balance; null/undefined/NaN become a dash. */
+function balance(v: number | string | null | undefined, unit: string) {
+  if (v === null || v === undefined) return '—';
+  const n = typeof v === 'number' ? v : parseFloat(v);
+  return Number.isFinite(n) ? `${n.toLocaleString()} ${unit}` : '—';
 }
 
 function MetricCard({ title, value, icon: Icon, color, subtitle }: MetricCardProps) {
@@ -35,11 +53,11 @@ function MetricCard({ title, value, icon: Icon, color, subtitle }: MetricCardPro
   );
 }
 
-export default function MetricsGrid({ data }: { data?: any }) {
+export default function MetricsGrid({ data }: { data?: DashboardMetrics | null }) {
   const metrics = [
     {
       title: 'Treasury USDT',
-      value: data?.treasury?.usdt !== undefined ? `${parseFloat(data.treasury.usdt).toLocaleString()} USDT` : '—',
+      value: balance(data?.treasury?.usdt, 'USDT'),
       icon: Wallet,
       color: '#3b82f6',
       subtitle: data?.treasury?.address || '',
@@ -52,7 +70,7 @@ export default function MetricsGrid({ data }: { data?: any }) {
     },
     {
       title: 'Treasury TRX',
-      value: data?.treasury?.trx !== undefined ? `${parseFloat(data.treasury.trx).toLocaleString()} TRX` : '—',
+      value: balance(data?.treasury?.trx, 'TRX'),
       icon: Coins,
       color: '#64748b',
       subtitle: 'Only needed to send USDT withdrawals by hand',

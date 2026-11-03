@@ -5,7 +5,7 @@ import styles from './metrics.module.css';
 import { KYCStatus } from '@/types';
 
 interface KYCMetricsProps {
-  requests: any[];
+  requests: { status?: string }[];
   activeFilter: KYCStatus | 'all';
   onFilterChange: (status: KYCStatus | 'all') => void;
 }
@@ -59,7 +59,7 @@ export default function KYCMetrics({ requests, activeFilter, onFilterChange }: K
           <div 
             key={metric.id} 
             className={`${styles.metricCard} ${isActive ? styles.active : ''}`}
-            onClick={() => onFilterChange(metric.id as any)}
+            onClick={() => onFilterChange(metric.id as KYCStatus | 'all')}
           >
             <div className={styles.cardHeader}>
               <div 

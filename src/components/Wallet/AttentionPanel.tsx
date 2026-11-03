@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminService } from '@/services/adminService';
+import { apiErrorMessage } from '@/lib/axios';
 import styles from './attention.module.css';
 
 interface HealthItem {
@@ -43,15 +44,15 @@ export default function AttentionPanel({ onChanged }: { onChanged?: () => void }
     load();
   }, [load]);
 
-  const run = async (key: string, fn: () => Promise<any>, success: string) => {
+  const run = async (key: string, fn: () => Promise<{ newDeposits?: number } | undefined>, success: string) => {
     setBusy(key);
     try {
       const res = await fn();
       toast.success(res?.newDeposits !== undefined ? `${success} Found ${res.newDeposits} new deposit(s).` : success);
       await load();
       onChanged?.();
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Action failed');
+    } catch (e) {
+      toast.error(apiErrorMessage(e, 'Action failed'));
     } finally {
       setBusy(null);
     }

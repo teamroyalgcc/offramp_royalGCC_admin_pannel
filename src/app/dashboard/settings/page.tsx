@@ -1,16 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Lock, User, ShieldAlert, Loader2, Save, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Settings, ShieldAlert, Loader2, Save, ArrowLeft, Eye, EyeOff, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { adminService } from '@/services/adminService';
+import { apiErrorMessage } from '@/lib/axios';
 import styles from '../transactions/dashboard.module.css';
 import settingsStyles from './settings.module.css';
 import SettingsSkeleton from './SettingsSkeleton';
 
+/** x.y.z, numbers only (what the mobile app compares against). */
+const SEMVER = /^\d+\.\d+\.\d+$/;
+
 export default function SettingsPage() {
-  const [admin, setAdmin] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -23,13 +26,20 @@ export default function SettingsPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // App release form
+  const [releaseLoading, setReleaseLoading] = useState(true);
+  const [releaseSaving, setReleaseSaving] = useState(false);
+  const [latestVersion, setLatestVersion] = useState('');
+  const [minVersion, setMinVersion] = useState('');
+  const [apkUrl, setApkUrl] = useState('');
+  const [releaseNotes, setReleaseNotes] = useState('');
+
   useEffect(() => {
     const checkRole = async () => {
       try {
         const response = await adminService.getMe();
           if (response.role === 'superadmin') {
             setIsAuthorized(true);
-            setAdmin(response);
             setUsername(response.username);
           } else {
             setIsAuthorized(false);
@@ -46,6 +56,55 @@ export default function SettingsPage() {
     checkRole();
   }, [router]);
 
+  useEffect(() => {
+    if (isAuthorized !== true) return;
+    let cancelled = false;
+    adminService.getAppVersion()
+      .then((v) => {
+        if (cancelled) return;
+        setLatestVersion(v.latestVersion ?? '');
+        setMinVersion(v.minVersion ?? '');
+        setApkUrl(v.apkUrl ?? '');
+        setReleaseNotes(v.releaseNotes ?? '');
+      })
+      .catch(() => { if (!cancelled) toast.error('Could not load the app release settings'); })
+      .finally(() => { if (!cancelled) setReleaseLoading(false); });
+    return () => { cancelled = true; };
+  }, [isAuthorized]);
+
+  const handleReleaseSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const latest = latestVersion.trim();
+    const min = minVersion.trim();
+    const url = apkUrl.trim();
+    if (latest && !SEMVER.test(latest)) {
+      toast.error('Latest version must look like 1.2.3');
+      return;
+    }
+    if (min && !SEMVER.test(min)) {
+      toast.error('Minimum version must look like 1.2.3');
+      return;
+    }
+    if (url && !/^https:\/\/\S+$/.test(url)) {
+      toast.error('APK URL must start with https://');
+      return;
+    }
+    setReleaseSaving(true);
+    try {
+      await adminService.updateAppRelease({
+        latestVersion: latest || null,
+        minVersion: min || null,
+        apkUrl: url || null,
+        releaseNotes: releaseNotes.trim() || null,
+      });
+      toast.success('App release settings saved');
+    } catch (error) {
+      toast.error(apiErrorMessage(error, 'Failed to save the app release settings'));
+    } finally {
+      setReleaseSaving(false);
+    }
+  };
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -56,22 +115,21 @@ export default function SettingsPage() {
 
     setSaving(true);
     try {
-      const payload: any = { username };
+      const payload: { username: string; password?: string } = { username };
       if (password) payload.password = password;
 
       const response = await adminService.updateCredentials(payload);
       if (response.status === 'success' || response.admin || response.username) {
         toast.success(response.message || 'Credentials updated successfully');
         const updatedAdmin = response.admin || response.data || response;
-        setAdmin(updatedAdmin);
         localStorage.setItem('admin_user', JSON.stringify(updatedAdmin));
         setPassword('');
         setConfirmPassword('');
       } else {
         toast.error(response.message || 'Update failed');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'An unexpected error occurred');
+    } catch (error) {
+      toast.error(apiErrorMessage(error, 'An unexpected error occurred'));
     } finally {
       setSaving(false);
     }
@@ -108,13 +166,14 @@ export default function SettingsPage() {
             <Settings size={24} color="#4f46e5" />
             <h1 className={styles.title}>System Settings</h1>
           </div>
-          <p className={styles.subtitle}>Configure your administrative account credentials</p>
+          <p className={styles.subtitle}>Administrator credentials and mobile app release</p>
         </div>
       </header>
 
       {loading ? (
         <SettingsSkeleton />
       ) : (
+        <>
         <section className={settingsStyles.settingsCard}>
         <div className={settingsStyles.sectionHeader}>
           <h2 className={settingsStyles.sectionTitle}>Administrator Credentials</h2>
@@ -192,6 +251,87 @@ export default function SettingsPage() {
           </button>
         </form>
         </section>
+
+        <section className={settingsStyles.settingsCard} style={{ marginTop: 24 }}>
+          <div className={settingsStyles.sectionHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Smartphone size={18} color="#4f46e5" />
+              <h2 className={settingsStyles.sectionTitle}>App release</h2>
+            </div>
+            <p className={settingsStyles.sectionSubtitle}>Users on an older version see an update prompt; versions below the minimum must update before they can continue.</p>
+          </div>
+
+          {releaseLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
+              <Loader2 className="animate-spin" size={24} color="#4f46e5" />
+            </div>
+          ) : (
+            <form onSubmit={handleReleaseSave} className={settingsStyles.form}>
+              <div className={settingsStyles.inputGroup}>
+                <label htmlFor="latestVersion">Latest version (x.y.z)</label>
+                <input
+                  id="latestVersion"
+                  type="text"
+                  inputMode="decimal"
+                  value={latestVersion}
+                  onChange={(e) => setLatestVersion(e.target.value)}
+                  placeholder="e.g. 1.2.3"
+                  pattern="\d+\.\d+\.\d+"
+                  disabled={releaseSaving}
+                />
+              </div>
+
+              <div className={settingsStyles.inputGroup}>
+                <label htmlFor="minVersion">Minimum version (x.y.z, optional)</label>
+                <input
+                  id="minVersion"
+                  type="text"
+                  inputMode="decimal"
+                  value={minVersion}
+                  onChange={(e) => setMinVersion(e.target.value)}
+                  placeholder="e.g. 1.0.0"
+                  pattern="\d+\.\d+\.\d+"
+                  disabled={releaseSaving}
+                />
+              </div>
+
+              <div className={settingsStyles.inputGroup}>
+                <label htmlFor="apkUrl">APK URL (https)</label>
+                <input
+                  id="apkUrl"
+                  type="url"
+                  value={apkUrl}
+                  onChange={(e) => setApkUrl(e.target.value)}
+                  placeholder="https://…/app.apk"
+                  disabled={releaseSaving}
+                />
+              </div>
+
+              <div className={settingsStyles.inputGroup}>
+                <label htmlFor="releaseNotes">Release notes</label>
+                <textarea
+                  id="releaseNotes"
+                  className={settingsStyles.textarea}
+                  value={releaseNotes}
+                  onChange={(e) => setReleaseNotes(e.target.value)}
+                  placeholder="What changed in this version (shown to users in the update prompt)"
+                  rows={4}
+                  disabled={releaseSaving}
+                />
+              </div>
+
+              <button
+                type="submit"
+                className={settingsStyles.saveButton}
+                disabled={releaseSaving}
+              >
+                {releaseSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                {releaseSaving ? 'Saving...' : 'Save app release'}
+              </button>
+            </form>
+          )}
+        </section>
+        </>
       )}
     </main>
   );

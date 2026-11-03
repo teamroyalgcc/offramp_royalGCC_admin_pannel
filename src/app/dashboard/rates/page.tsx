@@ -1,307 +1,184 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { adminService } from '@/services/adminService';
+import { apiErrorMessage } from '@/lib/axios';
 import { toast } from 'sonner';
-import { Percent, TrendingUp, Save, Loader2, Info, RefreshCw, Calculator, Lock, AlertTriangle } from 'lucide-react';
+import { Save, Loader2, RefreshCw, AlertTriangle, IndianRupee } from 'lucide-react';
 import styles from './rate.module.css';
 
 interface RateInfo {
-  rate: number | null; // null: no trustworthy rate, sells paused (pausedReason says why)
+  rate: number | null; // what users get right now; null = exchanges are paused (pausedReason says why)
+  mode: 'manual' | null;
   pausedReason?: string | null;
-  marketRate: number | null;
-  spreadPercent: number;
-  source: string | null;
-  sources?: Record<string, number | null>;
-  updatedAt: string | null;
-  mode: 'live' | 'manual' | null;
   manualRate: number | null;
-  manualRateExpiresAt: string | null;
+  updatedAt: string | null;
 }
 
-const SOURCE_LABELS: Record<string, string> = {
-  coindcx: 'CoinDCX',
-  wazirx: 'WazirX',
-  zebpay: 'ZebPay',
-};
-
-const fmt = (n: number | null | undefined) => (n == null ? '---' : `${Number(n).toFixed(2)} INR`);
+const fmt = (n: number | null | undefined) => (n == null ? '—' : Number(n).toFixed(2));
 
 export default function RatesPage() {
   const [info, setInfo] = useState<RateInfo | null>(null);
-  const [rateError, setRateError] = useState<string | null>(null);
-  const [spreadPercent, setSpreadPercent] = useState<string>('');
-  const [manualRate, setManualRate] = useState<string>('');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [overriding, setOverriding] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchData(true);
-  }, []);
-
-  const fetchData = async (loadSpread = false) => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const data: RateInfo = await adminService.getLiveRate();
       setInfo(data);
-      setRateError(data.rate === null ? data.pausedReason || 'No trustworthy rate' : null);
-      if (loadSpread) setSpreadPercent(String(data.spreadPercent));
-    } catch (error: any) {
+      setLoadError(null);
+    } catch (error) {
       setInfo(null);
-      setRateError(error.response?.data?.message || error.message || 'Unknown error');
+      setLoadError(apiErrorMessage(error, 'Could not load the rate'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const spread = parseFloat(spreadPercent);
-    if (isNaN(spread) || spread < 0 || spread > 10) {
-      toast.error('Spread must be between 0 and 10%');
-      return;
-    }
-    setUpdating(true);
-    try {
-      const response = await adminService.updateExchangeSpread(spread);
-      if (response.success) {
-        toast.success('Exchange spread updated');
-        await fetchData();
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update spread');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const applyOverride = async (value: number | null) => {
-    if (value !== null && (isNaN(value) || value <= 0)) {
-      toast.error('Enter a valid rate in INR per USDT');
-      return;
-    }
-    const market = info?.marketRate;
-    if (value !== null && market && Math.abs(value / market - 1) > 0.03 &&
-        !confirm(`${value.toFixed(2)} INR is ${((1 - value / market) * 100).toFixed(1)}% below the live market (${market.toFixed(2)}). Users get this rate for 24 hours. Continue?`)) {
-      return;
-    }
-    setOverriding(true);
-    try {
-      const response = await adminService.setManualRate(value);
-      if (response.success) {
-        toast.success(value === null ? 'Override cleared: live rate in use' : 'Fixed rate set for 24 hours');
-        setManualRate('');
-        await fetchData();
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update override');
-    } finally {
-      setOverriding(false);
-    }
-  };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const manualActive = info?.mode === 'manual';
+  const paused = !loading && !loadError && info != null && info.rate === null;
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = Math.round(parseFloat(input) * 100) / 100;
+    if (!Number.isFinite(value) || value < 50 || value > 500) {
+      toast.error('Enter a rate between 50 and 500 INR per USDT');
+      return;
+    }
+    const current = info?.rate != null ? `${fmt(info.rate)} INR` : 'none (paused)';
+    if (!confirm(`Change the rate users get from ${current} to ${value.toFixed(2)} INR per USDT?`)) return;
+    setSaving(true);
+    try {
+      await adminService.setManualRate(value);
+      toast.success(`Rate set to ${value.toFixed(2)} INR per USDT`);
+      setInput('');
+      await fetchData();
+    } catch (error) {
+      toast.error(apiErrorMessage(error, 'Failed to set the rate'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleClear = async () => {
+    if (!confirm('Clear the rate? Exchanges are PAUSED in the app until you set a rate again.')) return;
+    setSaving(true);
+    try {
+      await adminService.setManualRate(null);
+      toast.success('Rate cleared: exchanges are paused until a rate is set');
+      await fetchData();
+    } catch (error) {
+      toast.error(apiErrorMessage(error, 'Failed to clear the manual rate'));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <main className={styles.main}>
       <header className={styles.header}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <h1 className={styles.title}>Rates Configuration</h1>
-            <p className={styles.subtitle}>Live market prices, exchange spread and manual override</p>
+            <h1 className={styles.title}>Rates</h1>
+            <p className={styles.subtitle}>The INR per USDT rate users get on exchange orders</p>
           </div>
-          <button className={styles.refreshButton} onClick={() => fetchData()} disabled={loading}>
+          <button className={styles.refreshButton} onClick={fetchData} disabled={loading}>
             <RefreshCw className={loading ? 'animate-spin' : ''} size={18} />
-            <span>Refresh Market Data</span>
+            <span>Refresh</span>
           </button>
         </div>
       </header>
 
-      {rateError && !loading && (
-        <div className={styles.card} style={{ borderColor: '#fca5a5', background: '#fef2f2' }}>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+      {loadError && !loading && (
+        <div className={`${styles.card} ${styles.dangerCard}`}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
             <AlertTriangle size={22} style={{ color: '#dc2626', flexShrink: 0 }} />
-            <div>
-              <p style={{ fontWeight: 600, color: '#991b1b' }}>Live rate unavailable: sells are paused</p>
-              <p className={styles.infoText} style={{ color: '#7f1d1d' }}>{rateError}. Sells resume when at least two exchanges report a price again; refresh in a minute.</p>
-            </div>
+            <p className={styles.dangerText}>{loadError}</p>
           </div>
         </div>
       )}
 
       <div className={styles.card}>
-        <h2 className={styles.cardTitle}>USDT / INR Market</h2>
+        <div className={styles.cardHead}>
+          <h2 className={styles.cardTitle} style={{ marginBottom: 0 }}>Current rate users get</h2>
+          {!loading && info && (
+            <span className={`${styles.badge} ${manualActive ? styles.badgeManual : styles.badgeLive}`}>
+              {manualActive ? 'Active' : 'Not set'}
+            </span>
+          )}
+        </div>
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 className="animate-spin" size={32} color="#3b82f6" />
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Market Rate (lowest live source)</label>
-                <div className={styles.inputWrapper}>
-                  <TrendingUp className={styles.inputIcon} size={20} />
-                  <input
-                    type="text"
-                    className={styles.input}
-                    value={info?.marketRate != null ? `${fmt(info.marketRate)}${info.source ? ` · ${SOURCE_LABELS[info.source] ?? info.source}` : ''}` : '---'}
-                    readOnly
-                    style={{ background: '#f8fafc', borderColor: '#e2e8f0', cursor: 'default' }}
-                  />
-                </div>
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Last Update</label>
-                <div className={styles.inputWrapper}>
-                  <RefreshCw className={styles.inputIcon} size={20} />
-                  <input
-                    type="text"
-                    className={styles.input}
-                    value={info?.updatedAt ? new Date(info.updatedAt).toLocaleString() : '---'}
-                    readOnly
-                    style={{ background: '#f8fafc', borderColor: '#e2e8f0', cursor: 'default' }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '24px', fontSize: '14px' }}>
-              <thead>
-                <tr style={{ textAlign: 'left', color: '#64748b' }}>
-                  <th style={{ padding: '8px 0' }}>Source</th>
-                  <th style={{ padding: '8px 0' }}>What a USDT seller gets</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.keys(SOURCE_LABELS).map((key) => {
-                  const v = info?.sources?.[key];
-                  return (
-                    <tr key={key} style={{ borderTop: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '8px 0' }}>
-                        {SOURCE_LABELS[key]}{info?.source === key ? ' (lowest)' : ''}
-                      </td>
-                      <td style={{ padding: '8px 0', color: v == null ? '#94a3b8' : '#0f172a' }}>
-                        {v == null ? 'unavailable' : fmt(v)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            <div className={styles.calculatorCard}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ padding: '12px', background: 'white', borderRadius: '10px', display: 'flex', color: '#3b82f6', border: '1px solid #e2e8f0' }}>
-                  <Calculator size={24} />
-                </div>
+            <p className={styles.bigRate}>
+              {info?.rate != null ? fmt(info.rate) : '—'}
+              <span className={styles.bigRateUnit}> INR per USDT</span>
+            </p>
+            {paused && (
+              <div className={styles.pausedNote}>
+                <AlertTriangle size={18} style={{ flexShrink: 0 }} />
                 <div>
-                  <p className={styles.effectiveTitle}>
-                    Users Get Now {manualActive ? '(fixed rate)' : info ? `(market − ${info.spreadPercent}%)` : ''}
-                  </p>
-                  <p className={styles.effectiveValue}>1 USDT = {info?.rate != null ? Number(info.rate).toFixed(2) : '---'} INR</p>
+                  <p className={styles.pausedTitle}>Exchanges are paused</p>
+                  <p className={styles.pausedText}>{info?.pausedReason || 'No rate is available right now.'} Set a manual rate below to resume.</p>
                 </div>
               </div>
-            </div>
+            )}
+            {info?.updatedAt && (
+              <p className={styles.muted}>Last updated {new Date(info.updatedAt).toLocaleString()}</p>
+            )}
           </>
         )}
       </div>
 
       <div className={styles.card}>
-        <h2 className={styles.cardTitle}>Exchange Spread</h2>
-        <form onSubmit={handleUpdate}>
-          <div className={styles.formGroup} style={{ marginBottom: '24px' }}>
-            <label className={styles.label}>Spread (%), 0 to 10</label>
+        <h2 className={styles.cardTitle}>Set the rate</h2>
+        <form onSubmit={handleSave}>
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="manualRate">INR per USDT</label>
             <div className={styles.inputWrapper}>
-              <Percent className={styles.inputIcon} size={20} />
+              <IndianRupee className={styles.inputIcon} size={20} />
               <input
+                id="manualRate"
                 type="number"
-                step="0.1"
-                min="0"
-                max="10"
+                inputMode="decimal"
+                step="0.01"
+                min="50"
+                max="500"
                 className={styles.input}
-                value={spreadPercent}
-                onChange={(e) => setSpreadPercent(e.target.value)}
-                placeholder="e.g. 1.5"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={info?.rate != null ? `e.g. ${fmt(info.rate)}` : 'e.g. 92.50'}
+                disabled={saving || loading}
                 required
               />
             </div>
           </div>
-          <button type="submit" className={styles.button} disabled={updating}>
-            {updating ? (<><Loader2 className="animate-spin" size={20} />Saving...</>) : (<><Save size={20} />Save Spread</>)}
+          <button type="submit" className={styles.button} disabled={saving || loading || !input}>
+            {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+            Save
           </button>
-          <div className={styles.info}>
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-              <Info size={20} style={{ color: '#3b82f6', flexShrink: 0 }} />
-              <p className={styles.infoText} style={{ color: '#1e293b' }}>
-                Users get the lowest exchange price (what CoinDCX / WazirX / ZebPay pay for USDT) minus the spread. Lower rate = less INR paid per USDT.
-              </p>
-            </div>
-          </div>
         </form>
-      </div>
-
-      <div className={styles.card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 className={styles.cardTitle}>Manual Override</h2>
-          <span
-            style={{
-              padding: '4px 12px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
-              background: manualActive ? '#fef3c7' : '#dcfce7', color: manualActive ? '#92400e' : '#166534',
-            }}
-          >
-            {manualActive && info?.manualRateExpiresAt
-              ? `Manual until ${new Date(info.manualRateExpiresAt).toLocaleString()}`
-              : 'Live'}
-          </span>
-        </div>
-        {manualActive && info?.manualRate != null && (
-          <p className={styles.infoText} style={{ marginBottom: '16px' }}>Current fixed rate: {fmt(info.manualRate)}</p>
+        <p className={styles.muted} style={{ marginTop: 16 }}>
+          This exact rate is used for every new exchange order until you change or clear it.
+        </p>
+        {manualActive && (
+          <div className={styles.clearRow}>
+            <button type="button" className={styles.linkButton} onClick={handleClear} disabled={saving}>
+              Clear manual rate
+            </button>
+            <p className={styles.smallPrint}>This is the only rate: no external price feed and no spread. Without it, exchanges are paused.</p>
+          </div>
         )}
-        <div className={styles.formGroup} style={{ marginBottom: '24px' }}>
-          <label className={styles.label}>Fixed user rate (INR per USDT)</label>
-          <div className={styles.inputWrapper}>
-            <Lock className={styles.inputIcon} size={20} />
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              className={styles.input}
-              value={manualRate}
-              onChange={(e) => setManualRate(e.target.value)}
-              placeholder="e.g. 98.50"
-            />
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            type="button"
-            className={styles.button}
-            disabled={overriding || !manualRate || info?.marketRate == null}
-            onClick={() => applyOverride(parseFloat(manualRate))}
-          >
-            {overriding ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-            Set for 24 h
-          </button>
-          <button
-            type="button"
-            className={styles.button}
-            disabled={overriding || !manualActive}
-            onClick={() => applyOverride(null)}
-            style={{ background: '#64748b' }}
-          >
-            Clear override
-          </button>
-        </div>
-        <div className={styles.info}>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-            <Info size={20} style={{ color: '#3b82f6', flexShrink: 0 }} />
-            <p className={styles.infoText} style={{ color: '#1e293b' }}>
-              Users get this rate for 24 h. It can never be higher than the live market and must be within 10% under it, so it can only be set while live prices work; if they go down later, this rate is used until it expires.
-            </p>
-          </div>
-        </div>
       </div>
     </main>
   );

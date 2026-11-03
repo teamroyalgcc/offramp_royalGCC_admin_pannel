@@ -25,7 +25,7 @@ import { adminService } from '@/services/adminService';
 
 const menuItems = [
   { icon: Wallet, label: 'Dashboard', href: '/dashboard' },
-  { icon: ArrowRightLeft, label: 'Sell Orders (INR)', href: '/dashboard/transactions' },
+  { icon: ArrowRightLeft, label: 'Exchange Orders', href: '/dashboard/transactions' },
   { icon: Send, label: 'USDT Withdrawals', href: '/dashboard/withdrawals' },
   { icon: ShieldCheck, label: 'KYC', href: '/dashboard/kyc' },
   { icon: TrendingUp, label: 'Rates', href: '/dashboard/rates' },
@@ -38,7 +38,7 @@ const menuItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { isOpen, close } = useSidebar();
-  const [admin, setAdmin] = useState<any>(null);
+  const [admin, setAdmin] = useState<{ username?: string; role?: string } | null>(null);
 
   useEffect(() => {
     const fetchAdminProfile = async () => {

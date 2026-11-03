@@ -119,3 +119,19 @@ p {
   line-height: 1.5;
   color: var(--secondary);
 }
+
+/* Spinner for lucide icons while a request is in flight */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Hide secondary table columns on small screens */
+@media (max-width: 768px) {
+  .hideOnMobile {
+    display: none !important;
+  }
+}

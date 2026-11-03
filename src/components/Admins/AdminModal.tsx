@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, User, Mail, Lock, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from 'react';
+import { X, User, Lock, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import styles from './admin_modal.module.css';
 import { AdminUser } from '@/types';
 import CustomSelect from '@/components/Shared/CustomSelect';
@@ -15,8 +14,25 @@ interface AdminModalProps {
   mode: 'add' | 'password';
 }
 
+/**
+ * The form is mounted only while the modal is open (and re-mounted per admin / mode via `key`),
+ * so its state starts fresh each time without an effect that resets it.
+ */
 export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode }: AdminModalProps) {
-  const [username, setUsername] = useState('');
+  if (!isOpen) return null;
+  return (
+    <AdminModalForm
+      key={`${mode}-${editingAdmin?.id ?? 'new'}`}
+      onClose={onClose}
+      onSave={onSave}
+      editingAdmin={editingAdmin}
+      mode={mode}
+    />
+  );
+}
+
+function AdminModalForm({ onClose, onSave, editingAdmin, mode }: Omit<AdminModalProps, 'isOpen'>) {
+  const [username, setUsername] = useState(editingAdmin && mode === 'password' ? editingAdmin.username : '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<'admin' | 'superadmin'>('admin');
@@ -24,25 +40,6 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      if (editingAdmin && mode === 'password') {
-        setUsername(editingAdmin.username);
-        setPassword('');
-        setConfirmPassword('');
-      } else {
-        setUsername('');
-        setPassword('');
-        setConfirmPassword('');
-        setRole('admin');
-      }
-      setErrors({});
-      setShowPassword(false);
-      setShowConfirmPassword(false);
-    }
-  }, [editingAdmin, mode, isOpen]);
-
-  if (!isOpen) return null;
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -127,7 +124,7 @@ export default function AdminModal({ isOpen, onClose, onSave, editingAdmin, mode
                   <CustomSelect
                     label="Access Role"
                     value={role}
-                    onChange={(val) => setRole(val as any)}
+                    onChange={(val) => setRole(val as 'admin' | 'superadmin')}
                     options={[
                       { label: 'Standard Admin', value: 'admin' },
                       { label: 'Super Admin', value: 'superadmin' },

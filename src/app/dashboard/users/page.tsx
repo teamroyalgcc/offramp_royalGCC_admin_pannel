@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { adminService } from '@/services/adminService';
+import { UserRow } from '@/types';
 import { toast } from 'sonner';
 import styles from '../transactions/dashboard.module.css';
 import UserMetrics from '@/components/Users/UserMetrics';
@@ -10,7 +11,7 @@ import TableSkeleton from '@/components/Shared/TableSkeleton';
 
 
 export default function UsersManagementPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'frozen'>('all');
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +21,7 @@ export default function UsersManagementPage() {
       try {
         const data = await adminService.listUsers();
         setUsers(data);
-      } catch (error: any) {
+      } catch {
         toast.error('Failed to fetch users');
       } finally {
         setLoading(false);
@@ -34,7 +35,7 @@ export default function UsersManagementPage() {
       await adminService.freezeUser(id, is_frozen);
       toast.success(`User ${is_frozen ? 'frozen' : 'unfrozen'} successfully`);
       setUsers(prev => prev.map(u => u.id === id ? { ...u, is_frozen } : u));
-    } catch (error: any) {
+    } catch {
       toast.error('Failed to update user status');
     }
   };

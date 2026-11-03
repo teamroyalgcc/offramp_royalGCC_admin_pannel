@@ -4,10 +4,24 @@ import { Fragment, useCallback, useEffect, useState } from 'react';
 import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminService } from '@/services/adminService';
+import { apiErrorMessage } from '@/lib/axios';
 import styles from '../transactions/dashboard.module.css';
 import table from '@/components/Shared/table.module.css';
 import panel from '@/components/Wallet/attention.module.css';
 import TableSkeleton from '@/components/Shared/TableSkeleton';
+
+interface WithdrawalRow {
+  id: string;
+  order_no?: number | string | null;
+  user_id: string;
+  user?: { account_holder_name?: string; phone_number?: string } | null;
+  destination_address: string;
+  usdt_amount: string | number;
+  net_amount: string | number;
+  status: string;
+  tx_hash?: string | null;
+  created_at: string;
+}
 
 const STATUS_CLASS: Record<string, string> = {
   pending: table.statusPending,
@@ -21,7 +35,7 @@ const STATUS_CLASS: Record<string, string> = {
  * The backend never holds the treasury key.
  */
 export default function WithdrawalsPage() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<WithdrawalRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<{ id: string; mode: 'sent' | 'reject' } | null>(null);
   const [input, setInput] = useState('');
@@ -55,8 +69,8 @@ export default function WithdrawalsPage() {
       setOpen(null);
       setInput('');
       await load();
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Action failed');
+    } catch (e) {
+      toast.error(apiErrorMessage(e, 'Action failed'));
     } finally {
       setBusy(false);
     }
@@ -91,6 +105,7 @@ export default function WithdrawalsPage() {
               <thead>
                 <tr>
                   <th>User</th>
+                  <th>Order No</th>
                   <th>Send to (TRC20)</th>
                   <th>Requested</th>
                   <th>Send this</th>
@@ -101,7 +116,7 @@ export default function WithdrawalsPage() {
               </thead>
               <tbody>
                 {rows.length === 0 && (
-                  <tr><td colSpan={7} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>No withdrawal requests</td></tr>
+                  <tr><td colSpan={8} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>No withdrawal requests</td></tr>
                 )}
                 {rows.map((w) => {
                   const actionable = w.status === 'pending' || w.status === 'processing';
@@ -109,6 +124,7 @@ export default function WithdrawalsPage() {
                     <Fragment key={w.id}>
                       <tr className={table.tableRow}>
                         <td>{w.user?.account_holder_name || w.user?.phone_number || w.user_id}</td>
+                        <td><span className={table.txId}>{w.order_no != null ? String(w.order_no) : '—'}</span></td>
                         <td>
                           <span className={table.txId} style={{ wordBreak: 'break-all' }}>{w.destination_address}</span>{' '}
                           <button className={table.moreButton} onClick={() => copy(w.destination_address)} title="Copy address"><Copy size={14} /></button>
@@ -136,7 +152,7 @@ export default function WithdrawalsPage() {
                       </tr>
                       {open?.id === w.id && (
                         <tr>
-                          <td colSpan={7}>
+                          <td colSpan={8}>
                             <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', padding: '8px 0' }}>
                               <input
                                 autoFocus

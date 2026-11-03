@@ -1,3 +1,15 @@
+/** Row of GET /api/admin/users. */
+export interface UserRow {
+  id: string;
+  email?: string | null;
+  username?: string | null;
+  account_holder_name?: string | null;
+  account_number?: string | null;
+  ifsc_code?: string | null;
+  is_frozen?: boolean | null;
+  created_at?: string | null;
+}
+
 export type TransactionStatus = 'pending' | 'success' | 'failed' | 'processing' | 'stuck' | 'confirmed' | 'approved' | 'refunded';
 export type KYCStatus = 'pending' | 'approved' | 'rejected' | 'submitted';
 
@@ -10,7 +22,8 @@ export interface BankDetails {
 }
 
 export interface Transaction {
-  id: string;
+  id: string; // UUID, used for API calls only
+  orderNo: string; // 12-digit order number shown to admins and users
   userId: string;
   userName: string;
   userEmail?: string;
@@ -22,6 +35,7 @@ export interface Transaction {
   status: TransactionStatus;
   createdAt: string;
   bankDetails?: BankDetails;
+  completedAt?: string | null;
   gatewayRefId?: string | null;
   failureReason?: string | null;
 }

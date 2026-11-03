@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Upload, CheckCircle, AlertCircle, Clock, ExternalLink } from 'lucide-react';
+import { X, Clock, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import styles from './modal.module.css';
 import { Transaction, TransactionStatus } from '@/types';
@@ -15,6 +15,25 @@ interface TransactionModalProps {
 }
 
 const OPEN_STATUSES = ['pending', 'processing', 'approved'];
+
+/** One-click copy so the admin can paste bank details into the transfer form without selecting text. */
+function CopyButton({ value, label }: { value: string | number | null | undefined; label: string }) {
+  if (value === null || value === undefined || value === '') return null;
+  const copy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(String(value));
+      toast.success('Copied');
+    } catch {
+      toast.error('Could not copy');
+    }
+  };
+  return (
+    <button type="button" className={styles.copyButton} onClick={copy} title={`Copy ${label}`} aria-label={`Copy ${label}`}>
+      <Copy size={14} />
+    </button>
+  );
+}
 
 export default function TransactionModal({ transaction, isOpen, onClose, onUpdateStatus }: TransactionModalProps) {
   const [selectedStatus, setSelectedStatus] = useState<TransactionStatus>('success');
@@ -46,8 +65,11 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <div>
-            <h2 className={styles.title}>Transaction Details</h2>
-            <p className={styles.subtitle}>ID: #{transaction.id}</p>
+            <h2 className={styles.title}>Exchange Order</h2>
+            <p className={styles.subtitle}>
+              Order No: <span className={styles.orderNo}>{transaction.orderNo || '—'}</span>
+              <CopyButton value={transaction.orderNo} label="order number" />
+            </p>
           </div>
           <button className={styles.closeButton} onClick={onClose}>
             <X size={24} />
@@ -86,7 +108,10 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
                   )}
                   <div className={styles.infoItem}>
                     <span className={styles.label}>Account Holder</span>
-                    <span className={styles.value}>{transaction.bankDetails.accountHolder}</span>
+                    <span className={styles.valueRow}>
+                      <span className={styles.value}>{transaction.bankDetails.accountHolder}</span>
+                      <CopyButton value={transaction.bankDetails.accountHolder} label="account holder name" />
+                    </span>
                   </div>
                   <div className={styles.infoItem}>
                     <span className={styles.label}>KYC Name</span>
@@ -100,12 +125,18 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
                   </div>
                   <div className={styles.infoItem}>
                     <span className={styles.label}>Account Number</span>
-                    <span className={styles.value}>{transaction.bankDetails.accountNumber}</span>
+                    <span className={styles.valueRow}>
+                      <span className={styles.value}>{transaction.bankDetails.accountNumber}</span>
+                      <CopyButton value={transaction.bankDetails.accountNumber} label="account number" />
+                    </span>
                   </div>
                   {transaction.bankDetails.ifscCode && (
                     <div className={styles.infoItem}>
                       <span className={styles.label}>IFSC Code</span>
-                      <span className={styles.value}>{transaction.bankDetails.ifscCode}</span>
+                      <span className={styles.valueRow}>
+                        <span className={styles.value}>{transaction.bankDetails.ifscCode}</span>
+                        <CopyButton value={transaction.bankDetails.ifscCode} label="IFSC code" />
+                      </span>
                     </div>
                   )}
                 </>
@@ -117,7 +148,7 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
 
 
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Transaction Info</h3>
+            <h3 className={styles.sectionTitle}>Order Info</h3>
             <div className={styles.grid}>
               <div className={styles.infoItem}>
                 <span className={styles.label}>Amount (USDT)</span>
@@ -129,13 +160,17 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
                 <span className={styles.label}>Type</span>
                 <span className={styles.value} style={{ textTransform: 'capitalize' }}>{transaction.type}</span>
               </div>
-              {transaction.inr_amount && (
+              {!!transaction.inr_amount && (
                 <div className={styles.infoItem}>
-                  <span className={styles.label}>Expected INR</span>
-                  <span className={styles.value}>₹{transaction.inr_amount.toLocaleString()}</span>
+                  <span className={styles.label}>INR to send</span>
+                  <span className={styles.valueRow}>
+                    <span className={styles.value}>₹{transaction.inr_amount.toLocaleString()}</span>
+                    {/* Copies the plain number (e.g. 8450.50) so it pastes straight into the amount field. */}
+                    <CopyButton value={transaction.inr_amount.toFixed(2)} label="INR amount" />
+                  </span>
                 </div>
               )}
-              {transaction.rate && (
+              {!!transaction.rate && (
                 <div className={styles.infoItem}>
                   <span className={styles.label}>Rate</span>
                   <span className={styles.value}>₹{transaction.rate.toLocaleString()} / USDT</span>
@@ -145,6 +180,12 @@ export default function TransactionModal({ transaction, isOpen, onClose, onUpdat
                 <div className={styles.infoItem}>
                   <span className={styles.label}>Bank reference / UTR</span>
                   <span className={styles.value}>{transaction.gatewayRefId}</span>
+                </div>
+              )}
+              {transaction.completedAt && (
+                <div className={styles.infoItem}>
+                  <span className={styles.label}>Completed at</span>
+                  <span className={styles.value}>{new Date(transaction.completedAt).toLocaleString()}</span>
                 </div>
               )}
               {transaction.failureReason && (

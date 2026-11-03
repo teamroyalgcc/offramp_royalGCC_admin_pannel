@@ -255,3 +255,9 @@
 }
 
 .capitalize { text-transform: capitalize; }
+
+@media (max-width: 768px) {
+  .hideOnMobile {
+    display: none;
+  }
+}
