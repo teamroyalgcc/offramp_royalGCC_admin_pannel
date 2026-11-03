@@ -114,14 +114,10 @@ export const adminService = {
   },
 
   // --- CONFIG / RATES ---
-  // { rate, mode, pausedReason, manualRate, manualRateExpiresAt, marketRate, spreadPercent, source, sources,
+  // { rate, mode: 'manual' | null, pausedReason, manualRate, manualRateExpiresAt,
   //   updatedAt, minSellUsdt, minWithdrawalUsdt, withdrawalFeeUsdt }
   getLiveRate: async () => {
     const response = await api.get('/api/exchange/rate');
-    return response.data;
-  },
-  updateExchangeSpread: async (spreadPercent: number) => {
-    const response = await api.post('/api/admin/settings/rate', { spreadPercent });
     return response.data;
   },
   // number (50..500): the rate users get, used as-is until changed or cleared; null: clear it, the

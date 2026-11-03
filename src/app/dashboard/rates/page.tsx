@@ -9,7 +9,7 @@ import styles from './rate.module.css';
 
 interface RateInfo {
   rate: number | null; // what users get right now; null = exchanges are paused (pausedReason says why)
-  mode: 'live' | 'manual' | null;
+  mode: 'manual' | null;
   pausedReason?: string | null;
   manualRate: number | null;
   updatedAt: string | null;
@@ -68,11 +68,11 @@ export default function RatesPage() {
   };
 
   const handleClear = async () => {
-    if (!confirm('Clear the manual rate? The app will use the live Indian exchange rate minus the spread until you set a rate again.')) return;
+    if (!confirm('Clear the rate? Exchanges are PAUSED in the app until you set a rate again.')) return;
     setSaving(true);
     try {
       await adminService.setManualRate(null);
-      toast.success('Manual rate cleared, live rate in use');
+      toast.success('Rate cleared: exchanges are paused until a rate is set');
       await fetchData();
     } catch (error) {
       toast.error(apiErrorMessage(error, 'Failed to clear the manual rate'));
@@ -110,7 +110,7 @@ export default function RatesPage() {
           <h2 className={styles.cardTitle} style={{ marginBottom: 0 }}>Current rate users get</h2>
           {!loading && info && (
             <span className={`${styles.badge} ${manualActive ? styles.badgeManual : styles.badgeLive}`}>
-              {manualActive ? 'Manual' : 'Live fallback'}
+              {manualActive ? 'Active' : 'Not set'}
             </span>
           )}
         </div>
@@ -176,7 +176,7 @@ export default function RatesPage() {
             <button type="button" className={styles.linkButton} onClick={handleClear} disabled={saving}>
               Clear manual rate
             </button>
-            <p className={styles.smallPrint}>Without a manual rate the app uses the live Indian exchange rate minus the spread.</p>
+            <p className={styles.smallPrint}>This is the only rate: no external price feed and no spread. Without it, exchanges are paused.</p>
           </div>
         )}
       </div>
